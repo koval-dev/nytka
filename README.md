@@ -41,7 +41,7 @@ that has rotted says so, instead of reading exactly as confidently as one that h
 ```yaml
 ---
 type: Decision
-title: Russian at full parity
+title: Postgres for the primary datastore
 status: stable
 verified: [{ by: "human:owner", at: 2026-04-19 }]
 confidence: stated

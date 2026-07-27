@@ -223,7 +223,7 @@ One file per decision: `decisions/NNNN-kebab-title.md`. Numbers are never reused
 ```md
 ---
 type: Decision
-title: Russian at full parity
+title: Postgres for the primary datastore
 status: stable
 verified: [{ by: "human:owner", at: 2026-04-19 }]
 supersedes: null
