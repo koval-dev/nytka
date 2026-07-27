@@ -21,6 +21,10 @@ where the format is wrong, which means a second adopter with a different shape.
 
 ## Recent meaningful changes
 
+- **2026-07-27** — tool wiring corrected and a launcher skill added ([0005](decisions/0005-tool-integration-is-a-pointer.md)).
+  The recommended `.codex/` pointer did not exist; Codex and opencode read root `AGENTS.md`
+  directly, and only Claude Code needs a pointer. First case of the repo documenting wiring
+  it had never checked.
 - **2026-07-27** — weave extracted from a real adoption: SPEC.md, the project template, four
   procedures, and a zero-dependency lint tool.
 

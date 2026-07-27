@@ -1,7 +1,8 @@
 # Agent instructions — <project>
 
-Canonical instructions for any AI agent on this project. Tool-specific files (`CLAUDE.md`,
-`.cursor/rules/`, `.codex/`) are **pointers** to this file, never copies. Edit this one.
+Canonical instructions for any AI agent on this project. Most agent tools read this file at
+the project root directly; where a tool needs its own (`CLAUDE.md`, `.cursor/rules/`), that
+file is a **pointer** to this one, never a copy. Edit this one.
 
 Format: https://github.com/koval-dev/weave
 

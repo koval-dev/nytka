@@ -366,9 +366,14 @@ Weave ships `tools/weave-lint.mjs` — zero dependencies, `node tools/weave-lint
 
 ## 11. `AGENTS.md`
 
-One canonical instruction file per project. Tool-specific files (`CLAUDE.md`,
-`.cursor/rules/`, `.codex/`, `.github/copilot-instructions.md`) are pointers to it — never
-copies. Copies drift, and then agents disagree with each other.
+One canonical instruction file per project. Several agent tools read `AGENTS.md` at the
+project root directly. For the ones that do not, a tool-specific file (`CLAUDE.md`,
+`.cursor/rules/`, `.github/copilot-instructions.md`) points at it — never copies it. Copies
+drift, and then agents disagree with each other about how the project works.
+
+Check what a tool actually reads before writing a pointer for it. A pointer file that nothing
+loads is worse than no pointer: it looks like wiring, so nobody tests whether the wiring
+works. Which tools need one is a dated observation, not a property of the format.
 
 It must contain:
 

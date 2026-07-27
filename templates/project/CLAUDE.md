@@ -1,6 +1,9 @@
 # CLAUDE.md
 
-Read `AGENTS.md` in this directory. It is the canonical instruction file for all agents and
-tools on this project; this file exists only so Claude Code picks it up automatically.
+@AGENTS.md
+
+`AGENTS.md` (imported above) is the canonical instruction file for every agent and tool on
+this project. Claude Code reads only `CLAUDE.md`, so this file exists to pull that one in —
+other tools read `AGENTS.md` directly.
 
 Do not duplicate rules here — edit `AGENTS.md`.

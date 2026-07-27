@@ -54,9 +54,16 @@ Empty directories are noise and imply the project has knowledge it does not. Del
 
 ### 5. Point the tools at `AGENTS.md`
 
-Create pointer files for whichever tools are in use — `CLAUDE.md`, `.cursor/rules/`,
-`.github/copilot-instructions.md`. **Pointers, never copies.** Copies drift, and then your
-tools disagree with each other about how the project works.
+Create a pointer only for a tool that will not read `AGENTS.md` on its own. As of 2026-07-27
+that is Claude Code — the template's `CLAUDE.md` already covers it with an `@AGENTS.md`
+import. Codex and opencode read the root `AGENTS.md` directly and need nothing.
+
+Which tools need a pointer is a dated observation about software that ships weekly, kept in
+[0005](../decisions/0005-tool-integration-is-a-pointer.md) with an expiry. Re-check it rather
+than trusting this line.
+
+**Pointers, never copies.** Copies drift, and then your tools disagree with each other about
+how the project works.
 
 ### 6. Record the founding decisions
 

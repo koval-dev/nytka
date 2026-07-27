@@ -71,6 +71,15 @@ See [procedures/init-project.md](procedures/init-project.md).
 Inventory first, distil rather than copy, verify inherited claims against the live system,
 keep the old folder as a read-only archive.
 
+**Often** — install [skills/weave/SKILL.md](skills/weave/SKILL.md) as a skill in Claude Code
+or Codex, or a command in opencode; install instructions are in the file. It is a launcher,
+not a second spec: it locates this repo and routes to one procedure. Nothing depends on it —
+pasting the SPEC.md link stays the supported path.
+
+Once a project exists, `AGENTS.md` is what agents read. Codex and opencode pick it up at the
+project root with no configuration; Claude Code needs the `CLAUDE.md` pointer the template
+ships. See [decisions/0005](decisions/0005-tool-integration-is-a-pointer.md).
+
 ## Operations
 
 Three operations keep a package honest — [ingest](procedures/ingest.md),
