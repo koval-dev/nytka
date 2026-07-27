@@ -1,0 +1,41 @@
+schemaVersion: "0.1"
+
+id: weave
+name: Weave
+type: side-project
+status: active
+
+purpose:
+  description: >
+    A project context format — directory layout, frontmatter vocabulary, and three
+    operations — for keeping project knowledge accurate while AI agents write most of it.
+  primaryOutcome: >
+    An agent given one link can pick up, or start, a project without a human re-explaining it.
+
+owners:
+  projectOwner: Mike
+
+# Weave manages itself under its own rules. This repo IS a weave package — the dogfood,
+# and the first source of bug reports.
+components:
+  spec:
+    path: SPEC.md
+    role: the normative, self-contained document that gets linked to an agent
+  template:
+    path: templates/project
+    role: scaffold copied when starting a new project
+  tools:
+    path: tools
+    role: weave-lint — zero-dependency health check
+
+capabilities:
+  - context-format-design
+  - agent-instruction-design
+  - tooling
+
+tasks:
+  tracker: file
+  storage: registry
+  registry: tasks/tasks.yaml
+  idPrefixes: [SPEC, TOOL, DOC, ADOPT]
+

@@ -1,0 +1,105 @@
+# Weave
+
+**A project context format that agents can maintain without quietly lying to you.**
+
+Weave is a directory layout, a frontmatter vocabulary, and three operations
+(ingest · query · lint) for keeping project knowledge accurate while AI agents write most
+of it.
+
+## Point an agent at it
+
+```
+Read https://raw.githubusercontent.com/koval-dev/weave/main/SPEC.md
+and manage this project according to it.
+```
+
+[SPEC.md](SPEC.md) is normative and self-contained — one link is the whole format.
+[QUICKSTART.md](QUICKSTART.md) is the short version for an agent that needs to act now.
+
+## The problem it solves
+
+Project knowledge does not become obviously wrong. It becomes *plausibly* wrong.
+
+A plan says the CMS uses one localisation model. The build used another. Nobody wrote it
+down. Six months later an agent reads the plan and generates code against a model that never
+shipped. Nothing looked broken at any point.
+
+Agents make this worse from both ends: they produce knowledge quickly and consume it
+uncritically. In plain markdown, a generated guess and a fact the client confirmed on the
+phone are indistinguishable.
+
+Weave's premise: **you cannot stop knowledge going stale, so make staleness detectable.**
+Every claim records who made it, when, against what, and when to stop trusting it.
+
+## What that looks like
+
+```yaml
+---
+type: Decision
+title: Russian at full parity
+status: stable
+verified: [{ by: "human:owner", at: 2026-04-19 }]
+confidence: stated
+stale_after: 2027-04-19
+---
+```
+
+Trust tier is derived, never written: no `verified` → **unverified**; agents only →
+**machine-confirmed**; a `human:` verifier → **human-reviewed**.
+
+## Layout
+
+```
+project.yaml      identity, components, tracker mode      REQUIRED
+AGENTS.md         canonical agent instructions            REQUIRED
+overview.md       stable context
+current-state.md  what is happening now — kept short
+unresolved.md     open questions + working rule + trigger
+tasks/ decisions/ procedures/ research/ datasets/
+references/ artifacts/ history/ private/
+```
+
+Only the first two are required. The rest appear when real work needs them.
+
+## Getting started
+
+**New project** — copy [templates/project/](templates/project/), fill in `project.yaml` and
+`AGENTS.md`, delete what you do not need, run lint.
+See [procedures/init-project.md](procedures/init-project.md).
+
+**Existing project** — [procedures/adopt-existing.md](procedures/adopt-existing.md).
+Inventory first, distil rather than copy, verify inherited claims against the live system,
+keep the old folder as a read-only archive.
+
+## Operations
+
+Three operations keep a package honest — [ingest](procedures/ingest.md),
+query, and [lint](procedures/lint.md). Ingest distils new material in;
+query loads the narrowest level that answers a question; lint checks what rotted.
+
+## Lint
+
+```
+node tools/weave-lint.mjs /path/to/project
+```
+
+Zero dependencies. Checks expiry dates, unverified external claims, decision-graph
+consistency, dangling links, missing `type`, and staleness of `current-state.md`.
+
+Lint is the operation most projects skip and the one that pays. Nearly every knowledge
+failure in a real project is something it would have flagged.
+
+## Status
+
+**v0.1, draft.** In use on one real project. The format will change; it is markdown
+frontmatter, so migration is a rename.
+
+Weave manages itself under its own rules — `project.yaml`, `decisions/` and `current-state.md`
+in this repo are the dogfood, and the first bug reports.
+
+## Prior art
+
+Assembled rather than invented. The provenance vocabulary is a subset of Google Cloud's
+**Open Knowledge Format**; the ingest/query/lint operations come from **Karpathy's
+LLM-maintained wiki** pattern; decision records follow standard **ADR** practice.
+Credited in full in [SPEC.md §14](SPEC.md).

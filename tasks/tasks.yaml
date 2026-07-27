@@ -1,0 +1,69 @@
+version: 1
+updated: "2026-07-27"
+
+# Weave's own backlog. Schema: SPEC.md §8.
+
+tasks:
+  - id: DOC-001
+    title: "Publish weave publicly so SPEC.md is linkable by URL"
+    status: todo
+    priority: high
+    owner: mike
+    blockedBy: []
+    context: |
+      The entire product proposition is "paste one link into any agent". That does not work
+      until SPEC.md has a public raw URL. The repo exists but is private; README already
+      documents the intended link as raw.githubusercontent.com/koval-dev/weave/main/SPEC.md.
+    acceptanceCriteria:
+      - "the raw SPEC.md URL printed in README.md resolves"
+      - "no client, company or project data is present anywhere in the repo"
+    created: 2026-07-27
+    updated: 2026-07-27
+
+  - id: ADOPT-001
+    title: "Adopt weave on a second project with a different shape"
+    status: todo
+    priority: high
+    owner: mike
+    blockedBy: []
+    context: |
+      Everything in v0.1 came from one adoption: content/CMS work with a non-technical
+      approver. Which parts generalise and which are merely shaped by that one case is
+      currently indistinguishable. The useful contrast is a reporting-heavy project — it
+      would exercise datasets/, artifacts/ and agent-reported numbers, untested so far.
+    acceptanceCriteria:
+      - "the second project has project.yaml + AGENTS.md and passes lint with zero errors"
+      - "every vocabulary field left unfilled without prompting is listed in unresolved.md"
+    created: 2026-07-27
+    updated: 2026-07-27
+
+  - id: SPEC-001
+    title: "Decide whether stale_after should be required"
+    status: blocked
+    priority: medium
+    owner: mike
+    blockedBy: [ADOPT-001]
+    context: |
+      It is the field that makes lint useful and the one most likely to be omitted.
+      Requiring it forces a judgment on every document; leaving it optional means most
+      documents never get one and lint stays quiet about them. See unresolved.md.
+    acceptanceCriteria:
+      - "a decision record exists, or the question is closed in unresolved.md with a reason"
+    created: 2026-07-27
+    updated: 2026-07-27
+
+  - id: TOOL-001
+    title: "Add a worked project-specific lint check to the docs"
+    status: todo
+    priority: low
+    owner: mike
+    blockedBy: []
+    context: |
+      Lint checks form, not truth. procedures/lint.md states that truth-checking belongs in
+      the project but shows no example. A worked one — query a CMS, compare counts against
+      current-state.md — would make the boundary concrete. A count that drifted from the
+      live system is exactly the class of bug such a check catches.
+    acceptanceCriteria:
+      - "procedures/lint.md contains a runnable example of a truth-checking script"
+    created: 2026-07-27
+    updated: 2026-07-27

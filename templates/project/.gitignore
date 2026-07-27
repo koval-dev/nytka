@@ -1,0 +1,17 @@
+# Secrets and private context — never committed
+private/
+*.env
+.env*
+
+# Dataset payloads. The registry (datasets/index.json) IS committed; payloads are not.
+datasets/**/raw.*
+datasets/**/normalized.*
+datasets/**/*.csv
+datasets/**/*.ndjson
+
+# Generated views — rebuilt from the tracker, never hand-edited
+tasks/snapshot.md
+tasks/snapshot.json
+
+node_modules/
+.DS_Store

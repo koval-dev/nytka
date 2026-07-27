@@ -1,0 +1,37 @@
+schemaVersion: "0.1"
+
+id: my-project                  # stable slug — ends up in scripts; never changes
+name: My Project
+type: client                    # client | own-business | side-project | internal
+status: active                  # active | paused | archived
+
+purpose:
+  description: One or two sentences on what this is.
+  primaryOutcome: The single measurable thing that means it worked.
+
+owners:
+  projectOwner:
+  businessOwner: private-reference    # a pointer, never a real name in a shareable file
+
+# Every codebase and hosted system. Each is its own repo — this package holds no app code.
+# This is the field that earns its keep: without it an agent infers the layout by guessing.
+components:
+  # frontend:
+  #   path: ../my-project-web
+  #   repo: github.com/org/my-project-web
+  #   framework: astro-5
+  #   hosting: netlify
+  #   status: live
+  #
+  # archive:
+  #   path: ../old-working-folder
+  #   role: pre-framework source material — read-only
+
+capabilities: []                # e.g. [seo, content, reporting, development]
+
+tasks:
+  tracker: file                 # file | github-projects | linear | jira
+  storage: registry             # registry (one file) | files (one per task)
+  registry: tasks/tasks.yaml
+  snapshot: tasks/snapshot.md   # generated, read-only, gitignored
+  idPrefixes: []                # e.g. [WEB, SEO, CONT]

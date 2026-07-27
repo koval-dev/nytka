@@ -1,0 +1,8 @@
+# External system references. Identifiers and pointers only — never credentials.
+# Live tokens live in .env files and a password manager.
+
+# example:
+# cms:
+#   projectId:
+#   dataset:
+#   authEnvVar: CMS_TOKEN        # the NAME of the variable, never its value
