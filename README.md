@@ -1,10 +1,14 @@
 # Weave
 
-**A project context format that agents can maintain without quietly lying to you.**
+**Project context for AI agents.**
 
-Weave is a directory layout, a frontmatter vocabulary, and three operations
-(ingest · query · lint) for keeping project knowledge accurate while AI agents write most
-of it.
+Weave keeps a project's tasks, decisions, research, datasets and current state in one
+structure that Claude Code, Codex, opencode and anything else that reads files can share.
+Instead of re-explaining the project every session, an agent loads only the context its task
+needs.
+
+It is a format, not a service: a directory layout, a frontmatter vocabulary, and three
+operations (ingest · query · lint). No runtime, no daemon, nothing to install to read it.
 
 ## Point an agent at it
 
@@ -29,7 +33,8 @@ uncritically. In plain markdown, a generated guess and a fact the client confirm
 phone are indistinguishable.
 
 Weave's premise: **you cannot stop knowledge going stale, so make staleness detectable.**
-Every claim records who made it, when, against what, and when to stop trusting it.
+Every claim records who made it, when, against what, and when to stop trusting it. A package
+that has rotted says so, instead of reading exactly as confidently as one that has not.
 
 ## What that looks like
 

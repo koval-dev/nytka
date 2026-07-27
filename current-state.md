@@ -21,6 +21,10 @@ where the format is wrong, which means a second adopter with a different shape.
 
 ## Recent meaningful changes
 
+- **2026-07-27** — primary description changed from mechanism-first ("a directory layout, a
+  frontmatter vocabulary, and three operations") to category-first ("project context for AI
+  agents") in README, SPEC, `project.yaml` and the skill description. The old opener told a
+  reader what weave is made of before telling them what it is for.
 - **2026-07-27** — tool wiring corrected and a launcher skill added ([0005](decisions/0005-tool-integration-is-a-pointer.md)).
   The recommended `.codex/` pointer did not exist; Codex and opencode read root `AGENTS.md`
   directly, and only Claude Code needs a pointer. First case of the repo documenting wiring

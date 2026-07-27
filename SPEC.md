@@ -1,7 +1,7 @@
 ---
 type: Specification
 title: Weave — project context specification
-description: A file format and method for project knowledge that both humans and AI agents can maintain
+description: Project context for AI agents — a file format and method for project knowledge that both humans and agents can maintain
 status: draft
 version: "0.1"
 generated: { by: "human:mike + claude-opus-5", at: 2026-07-27 }
@@ -10,8 +10,9 @@ stale_after: 2027-07-27
 
 # Weave v0.1
 
-**Weave is a directory layout, a frontmatter vocabulary, and three operations for keeping
-project knowledge accurate while agents write most of it.**
+**Weave is project context for AI agents: a directory layout, a frontmatter vocabulary and
+three operations that keep a project's tasks, decisions, research, data and current state
+accurate while agents write most of it.**
 
 This file is normative and self-contained. Linking an agent to this one document gives it
 everything it needs to work on, or start, a weave project. Everything else in the weave

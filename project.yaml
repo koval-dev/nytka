@@ -7,8 +7,9 @@ status: active
 
 purpose:
   description: >
-    A project context format — directory layout, frontmatter vocabulary, and three
-    operations — for keeping project knowledge accurate while AI agents write most of it.
+    Project context for AI agents — a directory layout, a frontmatter vocabulary and three
+    operations that keep a project's tasks, decisions, research, data and current state
+    accurate while agents write most of it.
   primaryOutcome: >
     An agent given one link can pick up, or start, a project without a human re-explaining it.
 

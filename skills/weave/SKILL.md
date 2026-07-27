@@ -1,6 +1,6 @@
 ---
 name: weave
-description: Start a new weave project, adopt an existing project into weave, or work inside one. Use when asked to set up project context/documentation structure with weave, scaffold a weave package, migrate existing project notes into weave, or lint a weave package. Weave is a project-context format — project.yaml + AGENTS.md, provenance frontmatter, and the ingest/query/lint operations.
+description: Start a new weave project, adopt an existing project into weave, or work inside one. Use when asked to set up project context/documentation structure with weave, scaffold a weave package, migrate existing project notes into weave, or lint a weave package. Weave is project context for AI agents — project.yaml + AGENTS.md, provenance frontmatter, and the ingest/query/lint operations.
 type: Procedure
 title: Weave launcher
 status: draft
