@@ -1,5 +1,5 @@
 version: 1
-updated: "2026-07-27"
+updated: "2026-07-28"
 
 # Nytka's own backlog. Schema: SPEC.md §8.
 
@@ -19,6 +19,36 @@ tasks:
       - "no client, company or project data is present anywhere in the repo"
     created: 2026-07-27
     updated: 2026-07-27
+
+  - id: SPEC-002
+    title: "Name the task lifecycle in SPEC §8"
+    status: in_progress
+    priority: high
+    owner: mike
+    blockedBy: []
+    context: |
+      The detailed task behind FMT-001 in the kd-nytka program registry.
+
+      §8 requires a `status` field and never names a legal value. nytka-lint validates
+      `status` only on document frontmatter (draft|stable|deprecated|superseded) and does not
+      read tasks.yaml at all, so task status is both unspecified and unchecked.
+
+      That gap already produced a real error: kd-nytka/AGENTS.md claimed four statuses were
+      "matching SPEC §8 as it stands today", citing §8 for a vocabulary it has never carried.
+
+      Decision 0006 drafts the lifecycle and the rule that no task leaves `proposed` without a
+      human in `acceptedBy` — the task-level equivalent of the trust tiers §5 already gives
+      documents. Two open points block the SPEC edit: whether `todo` is dropped in favour of
+      `ready`, and whether `acceptedBy` earns its own field or reuses `verified`.
+    acceptanceCriteria:
+      - "0006 is confirmed by the owner and its two open points are settled"
+      - "SPEC §8 names every status and what moves a task from each one to the next"
+      - "an agent-proposed task is distinguishable from a human-committed one by field, not by convention"
+      - "kd-nytka/AGENTS.md no longer cites §8 for a vocabulary §8 does not define"
+      - "every tasks.yaml in the line uses only the named statuses"
+      - "node tools/nytka-lint.mjs . passes with zero errors"
+    created: 2026-07-28
+    updated: 2026-07-28
 
   - id: ADOPT-001
     title: "Adopt nytka on a second project with a different shape"
