@@ -19,7 +19,7 @@ documents may exist alongside it, but the spec is never split across them.
 
 The product is "paste one link into any agent and it knows the format". An agent given a URL
 fetches one document. A spec split into `spec/00-concepts.md` … `spec/08-operations.md` is
-better to maintain and useless for the only feature that makes weave worth adopting.
+better to maintain and useless for the only feature that makes nytka worth adopting.
 
 Maintainability of the spec is a cost paid by one person. Fetchability is a benefit paid to
 every user, every session.

@@ -1,20 +1,20 @@
-# Agent instructions — weave
+# Agent instructions — nytka
 
-Instructions for working **on** weave itself. If you are looking for how to *use* weave on a
+Instructions for working **on** nytka itself. If you are looking for how to *use* nytka on a
 project, read [SPEC.md](SPEC.md) or [QUICKSTART.md](QUICKSTART.md) instead.
 
 ## Reading order
 
 1. `SPEC.md` — the format. Normative and self-contained.
 2. `current-state.md` — what is being worked on
-3. `decisions/` — why weave is shaped the way it is
+3. `decisions/` — why nytka is shaped the way it is
 4. `unresolved.md` — what is deliberately unsettled
 
 Do not auto-scan `adopters/` or `templates/`.
 
 ## The one rule that matters most
 
-**Weave is described by SPEC.md, and SPEC.md is a single self-contained file.**
+**Nytka is described by SPEC.md, and SPEC.md is a single self-contained file.**
 
 The product is "paste one link and the agent knows the format". Splitting the spec across
 files breaks the only feature that makes it worth using. Deep-dives may exist alongside it,
@@ -22,7 +22,7 @@ but SPEC.md must stay complete on its own.
 
 ## The second rule
 
-**Weave manages itself under its own rules.** This repo is a weave package. If a rule is
+**Nytka manages itself under its own rules.** This repo is a nytka package. If a rule is
 annoying to follow here, that is a bug report about the rule, not an exception to it.
 
 When something in the spec turns out to be impractical, record it in `unresolved.md` or
@@ -52,14 +52,14 @@ operations come from Karpathy's LLM wiki pattern; decisions follow ADR practice.
 SPEC §14.
 
 **Do not silently diverge from OKF field names.** Compatibility is a feature — an OKF-aware
-tool should be able to read weave frontmatter. Divergence needs a decision record saying why.
+tool should be able to read nytka frontmatter. Divergence needs a decision record saying why.
 
 ## The lint tool
 
-`tools/weave-lint.mjs` has **zero dependencies** and must stay that way. It is often the
+`tools/nytka-lint.mjs` has **zero dependencies** and must stay that way. It is often the
 first thing someone runs; `npm install` before first value is a bad trade.
 
-It parses only the weave frontmatter subset — that limitation is deliberate and documented in
+It parses only the nytka frontmatter subset — that limitation is deliberate and documented in
 the file header. If the vocabulary needs syntax the parser cannot handle, that is an argument
 against the syntax.
 
@@ -83,7 +83,7 @@ private repo.
 ## Before finishing
 
 ```bash
-node tools/weave-lint.mjs .
+node tools/nytka-lint.mjs .
 ```
 
-Zero errors. Weave failing its own lint is the least defensible bug available.
+Zero errors. Nytka failing its own lint is the least defensible bug available.

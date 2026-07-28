@@ -1,13 +1,13 @@
 ---
 type: Procedure
-title: Adopt weave on an existing project
-description: Migrate scattered context — chat logs, notes, agent memory — into a weave package
+title: Adopt nytka on an existing project
+description: Migrate scattered context — chat logs, notes, agent memory — into a nytka package
 status: stable
 generated: { by: claude-opus-5, at: 2026-07-27 }
 verified: [{ by: "human:mike", at: 2026-07-27, against: "a real adoption" }]
 ---
 
-# Procedure — adopt weave on an existing project
+# Procedure — adopt nytka on an existing project
 
 **Trigger:** a project with accumulated context — strategy docs, chat history, agent memory
 files, a task list, notes in YAML comments — that a new agent cannot pick up.
@@ -99,7 +99,7 @@ Nothing is destroyed, the migration is reversible, and raw sources stay immutabl
 ### 7. Lint, then commit
 
 ```bash
-node weave/tools/weave-lint.mjs .
+node nytka/tools/nytka-lint.mjs .
 ```
 
 Then update any agent memory that points at the old location — otherwise the next session

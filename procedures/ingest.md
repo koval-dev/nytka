@@ -1,6 +1,6 @@
 ---
 type: Procedure
-title: Ingest new material into a weave package
+title: Ingest new material into a nytka package
 description: Distil a chat log, research dump or client call into the project package
 status: draft
 generated: { by: claude-opus-5, at: 2026-07-27 }
@@ -83,7 +83,7 @@ or it stops being read.
 ### 6. Lint
 
 ```bash
-node weave/tools/weave-lint.mjs .
+node nytka/tools/nytka-lint.mjs .
 ```
 
 ---

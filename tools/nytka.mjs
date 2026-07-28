@@ -1,6 +1,6 @@
 #!/usr/bin/env node
-// weave — working commands for a weave project package.
-// Zero dependencies. Usage: node weave.mjs <command> [args] [--today YYYY-MM-DD]
+// nytka — working commands for a nytka project package.
+// Zero dependencies. Usage: node nytka.mjs <command> [args] [--today YYYY-MM-DD]
 //
 //   status                  identity, state age, task counts, what is next, lint summary
 //   next                    the highest-priority task with nothing blocking it
@@ -11,11 +11,11 @@
 //   task block <id> <by>    status -> blocked, blockedBy += <by>
 //   context <id>            assemble the bounded context for a task (SPEC.md §10)
 //   init [dir]              scaffold a new package from templates/project
-//   lint [dir]              delegate to weave-lint.mjs
+//   lint [dir]              delegate to nytka-lint.mjs
 //
-// Parses only the YAML subset weave actually uses: nested maps, "- " lists, inline
+// Parses only the YAML subset nytka actually uses: nested maps, "- " lists, inline
 // [a, b] and {a: b}, and "|" / ">" block scalars. Same deliberate limitation as
-// weave-lint.mjs — a full YAML parser would be a dependency.
+// nytka-lint.mjs — a full YAML parser would be a dependency.
 
 import { readFileSync, writeFileSync, existsSync, readdirSync, statSync, mkdirSync, copyFileSync } from 'node:fs'
 import { join, resolve, dirname, relative, basename } from 'node:path'
@@ -185,8 +185,8 @@ function findRoot (start = process.cwd()) {
 const ROOT = findRoot()
 function requireRoot () {
   if (!ROOT) {
-    console.error('weave: no project.yaml found here or in any parent directory.')
-    console.error('       run `weave init <dir>` to scaffold one.')
+    console.error('nytka: no project.yaml found here or in any parent directory.')
+    console.error('       run `nytka init <dir>` to scaffold one.')
     process.exit(2)
   }
   return ROOT
@@ -213,7 +213,7 @@ const daysBetween = (a, b) => Math.floor((Date.parse(b) - Date.parse(a)) / 86400
 function setTaskFields (id, fields) {
   const { file, list } = loadTasks()
   const task = list.find(t => String(t.id) === id)
-  if (!task) { console.error(`weave: no task ${id}`); process.exit(2) }
+  if (!task) { console.error(`nytka: no task ${id}`); process.exit(2) }
   const start = task.__line
   const lines = readFileSync(file, 'utf8').split('\n')
   const itemIndent = lines[start].match(/^ */)[0].length
@@ -254,7 +254,7 @@ function isActionable (t, byId) {
 }
 
 function runLint (dir) {
-  const lint = join(HERE, 'weave-lint.mjs')
+  const lint = join(HERE, 'nytka-lint.mjs')
   if (!existsSync(lint)) return null
   const r = spawnSync(process.execPath, [lint, dir, '--json', `--today=${TODAY}`], { encoding: 'utf8' })
   try { return JSON.parse(r.stdout) } catch { return null }
@@ -330,8 +330,8 @@ function cmdNext () {
   const t = ready[0]
   console.log(`\n  ${t.id}  ${t.title}`)
   console.log(`  priority ${t.priority ?? 'unset'} · owner ${t.owner ?? 'unassigned'}\n`)
-  console.log(`  weave context ${t.id}     assemble what an agent needs`)
-  console.log(`  weave task start ${t.id}  mark it in progress\n`)
+  console.log(`  nytka context ${t.id}     assemble what an agent needs`)
+  console.log(`  nytka task start ${t.id}  mark it in progress\n`)
 }
 
 function cmdTask (sub, id, arg) {
@@ -353,7 +353,7 @@ function cmdTask (sub, id, arg) {
 
   if (sub === 'show') {
     const t = byId.get(String(id))
-    if (!t) { console.error(`weave: no task ${id}`); process.exit(2) }
+    if (!t) { console.error(`nytka: no task ${id}`); process.exit(2) }
     console.log(`\n  ${t.id}  ${t.title}\n`)
     for (const k of ['status', 'priority', 'owner', 'repo', 'created', 'updated']) {
       if (t[k] != null && t[k] !== '') console.log(`  ${pad(k, 12)} ${t[k]}`)
@@ -372,7 +372,7 @@ function cmdTask (sub, id, arg) {
   }
 
   if (sub === 'start' || sub === 'done' || sub === 'block') {
-    if (!id) { console.error(`weave: task ${sub} needs a task id`); process.exit(2) }
+    if (!id) { console.error(`nytka: task ${sub} needs a task id`); process.exit(2) }
     const status = sub === 'start' ? 'in_progress' : sub === 'done' ? 'done' : 'blocked'
     const fields = { status, updated: TODAY }
     if (sub === 'block') {
@@ -395,22 +395,22 @@ function cmdTask (sub, id, arg) {
     return
   }
 
-  console.error(`weave: unknown task subcommand "${sub}"`)
+  console.error(`nytka: unknown task subcommand "${sub}"`)
   process.exit(2)
 }
 
 function cmdContext (id) {
   const root = requireRoot()
-  if (!id) { console.error('weave: context needs a task id'); process.exit(2) }
+  if (!id) { console.error('nytka: context needs a task id'); process.exit(2) }
   const p = loadProject()
   const { list } = loadTasks()
   const t = list.find(x => String(x.id) === String(id))
-  if (!t) { console.error(`weave: no task ${id}`); process.exit(2) }
+  if (!t) { console.error(`nytka: no task ${id}`); process.exit(2) }
 
   const out = []
   out.push(`# Context for ${t.id} — ${t.title}`)
   out.push('')
-  out.push(`Assembled ${TODAY} by weave from ${basename(root)}. This is the task level of`)
+  out.push(`Assembled ${TODAY} by nytka from ${basename(root)}. This is the task level of`)
   out.push('SPEC.md §10: the narrowest load that answers the question.')
   out.push('')
 
@@ -494,7 +494,7 @@ function cmdContext (id) {
 
 function cmdInit (target) {
   const src = resolve(HERE, '..', 'templates', 'project')
-  if (!existsSync(src)) { console.error(`weave: template not found at ${src}`); process.exit(2) }
+  if (!existsSync(src)) { console.error(`nytka: template not found at ${src}`); process.exit(2) }
   const dest = resolve(target ?? '.')
   let created = 0, skipped = 0
   const walk = (from, to) => {
@@ -510,11 +510,11 @@ function cmdInit (target) {
   walk(src, dest)
   console.log(`\n  ${created} created, ${skipped} left alone\n`)
   console.log('  next: fill project.yaml and AGENTS.md, delete the directories you do not')
-  console.log('  need yet, then `git init` and `weave status`.\n')
+  console.log('  need yet, then `git init` and `nytka status`.\n')
 }
 
 function cmdLint (dir) {
-  const lint = join(HERE, 'weave-lint.mjs')
+  const lint = join(HERE, 'nytka-lint.mjs')
   const r = spawnSync(process.execPath, [lint, dir ?? ROOT ?? '.', `--today=${TODAY}`], { stdio: 'inherit' })
   process.exit(r.status ?? 0)
 }
@@ -534,6 +534,6 @@ switch (cmd) {
       .split('\n').filter(l => l.startsWith('//')).map(l => l.slice(3)).join('\n'))
     break
   default:
-    console.error(`weave: unknown command "${cmd}" — try \`weave help\``)
+    console.error(`nytka: unknown command "${cmd}" — try \`nytka help\``)
     process.exit(2)
 }

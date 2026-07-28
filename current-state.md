@@ -1,7 +1,7 @@
 ---
 type: State
 title: Current state
-description: What is happening on weave right now
+description: What is happening on nytka right now
 status: draft
 generated: { by: claude-opus-5, at: 2026-07-27 }
 ---
@@ -24,12 +24,12 @@ where the format is wrong, which means a second adopter with a different shape.
 - **2026-07-27** — primary description changed from mechanism-first ("a directory layout, a
   frontmatter vocabulary, and three operations") to category-first ("project context for AI
   agents") in README, SPEC, `project.yaml` and the skill description. The old opener told a
-  reader what weave is made of before telling them what it is for.
+  reader what nytka is made of before telling them what it is for.
 - **2026-07-27** — tool wiring corrected and a launcher skill added ([0005](decisions/0005-tool-integration-is-a-pointer.md)).
   The recommended `.codex/` pointer did not exist; Codex and opencode read root `AGENTS.md`
   directly, and only Claude Code needs a pointer. First case of the repo documenting wiring
   it had never checked.
-- **2026-07-27** — weave extracted from a real adoption: SPEC.md, the project template, four
+- **2026-07-27** — nytka extracted from a real adoption: SPEC.md, the project template, four
   procedures, and a zero-dependency lint tool.
 
 ## Blockers
@@ -50,9 +50,9 @@ None.
 | Claim | Value | Verified | Against |
 |---|---|---|---|
 | Adopters in production | 1 | 2026-07-27 | filesystem |
-| Lint runs clean on itself | yes | 2026-07-27 | `node tools/weave-lint.mjs .` |
+| Lint runs clean on itself | yes | 2026-07-27 | `node tools/nytka-lint.mjs .` |
 | Lint dependencies | 0 | 2026-07-27 | source |
 
 ## Next deadline
 
-None. Weave is a tool for other work, not a deliverable.
+None. Nytka is a tool for other work, not a deliverable.

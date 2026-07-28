@@ -1,6 +1,6 @@
 ---
 type: Procedure
-title: Lint a weave project
+title: Lint a nytka project
 description: Health-check a package for stale claims, broken decision graphs and dangling links
 status: draft
 generated: { by: claude-opus-5, at: 2026-07-27 }
@@ -11,9 +11,9 @@ generated: { by: claude-opus-5, at: 2026-07-27 }
 **Trigger:** session start, after any ingest, and before committing knowledge changes.
 
 ```bash
-node weave/tools/weave-lint.mjs /path/to/project
-node weave/tools/weave-lint.mjs . --json          # machine-readable
-node weave/tools/weave-lint.mjs . --today=2027-01-01   # test future staleness
+node nytka/tools/nytka-lint.mjs /path/to/project
+node nytka/tools/nytka-lint.mjs . --json          # machine-readable
+node nytka/tools/nytka-lint.mjs . --today=2027-01-01   # test future staleness
 ```
 
 Exit code `1` if any error-level finding exists, `0` otherwise. Zero dependencies.
@@ -50,7 +50,7 @@ tells you a claim is *unverified or expired*, never that it is *wrong*.
 
 For that, extend it per project: a CMS-backed project might query the CMS and compare
 published-document counts against the snapshot in `current-state.md`. Such checks are
-project-specific and belong in the project, not in weave.
+project-specific and belong in the project, not in nytka.
 
 ---
 

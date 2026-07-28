@@ -1,6 +1,6 @@
 ---
 type: Specification
-title: Weave — project context specification
+title: Nytka — project context specification
 description: Project context for AI agents — a file format and method for project knowledge that both humans and agents can maintain
 status: draft
 version: "0.1"
@@ -8,14 +8,14 @@ generated: { by: "human:mike + claude-opus-5", at: 2026-07-27 }
 stale_after: 2027-07-27
 ---
 
-# Weave v0.1
+# Nytka v0.1
 
-**Weave is project context for AI agents: a directory layout, a frontmatter vocabulary and
+**Nytka is project context for AI agents: a directory layout, a frontmatter vocabulary and
 three operations that keep a project's tasks, decisions, research, data and current state
 accurate while agents write most of it.**
 
 This file is normative and self-contained. Linking an agent to this one document gives it
-everything it needs to work on, or start, a weave project. Everything else in the weave
+everything it needs to work on, or start, a nytka project. Everything else in the nytka
 repo is tooling or examples.
 
 ---
@@ -30,7 +30,7 @@ model that never shipped.
 Agents make this worse in both directions. They produce knowledge fast, and they consume it
 uncritically. A generated claim and a human-verified fact look identical in markdown.
 
-Weave's premise: **you cannot prevent knowledge from going stale, so make staleness
+Nytka's premise: **you cannot prevent knowledge from going stale, so make staleness
 detectable.** Every claim carries who made it, when, against what, and when to stop trusting it.
 
 ---
@@ -152,8 +152,8 @@ hosted systems; without this, an agent infers the layout from whatever it stumbl
 Every markdown file except `README.md` and pure pointers carries YAML frontmatter.
 One field is required: `type`.
 
-*This vocabulary is a deliberate subset of Google's Open Knowledge Format (OKF), so weave
-documents stay readable by OKF-aware tooling. Weave adds `confidence` and `supersedes`.*
+*This vocabulary is a deliberate subset of Google's Open Knowledge Format (OKF), so nytka
+documents stay readable by OKF-aware tooling. Nytka adds `confidence` and `supersedes`.*
 
 ```yaml
 ---
@@ -257,7 +257,7 @@ tissue lives. A procedure without one is a tutorial, not a procedure.
 
 ## 8. Tasks
 
-Weave does not mandate a tracker. `project.yaml → tasks.tracker` declares it, and `AGENTS.md`
+Nytka does not mandate a tracker. `project.yaml → tasks.tracker` declares it, and `AGENTS.md`
 documents the workflow for the declared mode.
 
 **`tracker: file`** — a registry file is authoritative. Cheap, offline, diffable, portable
@@ -361,7 +361,7 @@ failure in a real project is something a lint pass would have flagged: a superse
 never marked, a count that drifted from the live system, a string that got "corrected" to a
 wrong value in seventeen files.
 
-Weave ships `tools/weave-lint.mjs` — zero dependencies, `node tools/weave-lint.mjs <dir>`.
+Nytka ships `tools/nytka-lint.mjs` — zero dependencies, `node tools/nytka-lint.mjs <dir>`.
 
 ---
 
@@ -409,7 +409,7 @@ you find out what was already wrong — that is most of its value.
 
 ## 13. Conformance
 
-A conforming weave project:
+A conforming nytka project:
 
 1. has `project.yaml` with `schemaVersion`, `id`, `name`, `status`
 2. has `AGENTS.md`
@@ -423,11 +423,11 @@ broken cross-links, missing optional files, or frontmatter fields it does not re
 
 ## 14. Prior art
 
-Weave is an assembly, and the parts are better documented in their sources:
+Nytka is an assembly, and the parts are better documented in their sources:
 
 - **Open Knowledge Format** (Google Cloud) — the provenance vocabulary: `type`, `generated`,
   `verified`, `status`, `stale_after`, `sources`, the actor convention, derived trust tiers,
-  and the liberal-conformance rule. Weave uses a subset and adds `confidence` and the
+  and the liberal-conformance rule. Nytka uses a subset and adds `confidence` and the
   supersede pair. OKF's Attested Computations are out of scope here but are the right model
   for any project where an agent reports numbers it computed.
 - **Karpathy's LLM wiki** — the three-layer split (immutable sources / agent-owned wiki /

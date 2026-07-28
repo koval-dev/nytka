@@ -12,8 +12,8 @@ superseded_by: null
 
 ## Decision
 
-`tools/weave-lint.mjs` has no dependencies and runs on stock Node. It includes a hand-rolled
-parser covering only the weave frontmatter subset.
+`tools/nytka-lint.mjs` has no dependencies and runs on stock Node. It includes a hand-rolled
+parser covering only the nytka frontmatter subset.
 
 ## Reason
 

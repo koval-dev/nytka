@@ -1,8 +1,8 @@
-# Weave
+# Nytka
 
 **Project context for AI agents.**
 
-Weave keeps a project's tasks, decisions, research, datasets and current state in one
+Nytka keeps a project's tasks, decisions, research, datasets and current state in one
 structure that Claude Code, Codex, opencode and anything else that reads files can share.
 Instead of re-explaining the project every session, an agent loads only the context its task
 needs.
@@ -13,7 +13,7 @@ operations (ingest · query · lint). No runtime, no daemon, nothing to install 
 ## Point an agent at it
 
 ```
-Read https://raw.githubusercontent.com/koval-dev/weave/main/SPEC.md
+Read https://raw.githubusercontent.com/koval-dev/nytka/main/SPEC.md
 and manage this project according to it.
 ```
 
@@ -32,7 +32,7 @@ Agents make this worse from both ends: they produce knowledge quickly and consum
 uncritically. In plain markdown, a generated guess and a fact the client confirmed on the
 phone are indistinguishable.
 
-Weave's premise: **you cannot stop knowledge going stale, so make staleness detectable.**
+Nytka's premise: **you cannot stop knowledge going stale, so make staleness detectable.**
 Every claim records who made it, when, against what, and when to stop trusting it. A package
 that has rotted says so, instead of reading exactly as confidently as one that has not.
 
@@ -76,7 +76,7 @@ See [procedures/init-project.md](procedures/init-project.md).
 Inventory first, distil rather than copy, verify inherited claims against the live system,
 keep the old folder as a read-only archive.
 
-**Often** — install [skills/weave/SKILL.md](skills/weave/SKILL.md) as a skill in Claude Code
+**Often** — install [skills/nytka/SKILL.md](skills/nytka/SKILL.md) as a skill in Claude Code
 or Codex, or a command in opencode; install instructions are in the file. It is a launcher,
 not a second spec: it locates this repo and routes to one procedure. Nothing depends on it —
 pasting the SPEC.md link stays the supported path.
@@ -94,7 +94,7 @@ query loads the narrowest level that answers a question; lint checks what rotted
 ## Lint
 
 ```
-node tools/weave-lint.mjs /path/to/project
+node tools/nytka-lint.mjs /path/to/project
 ```
 
 Zero dependencies. Checks expiry dates, unverified external claims, decision-graph
@@ -108,7 +108,7 @@ failure in a real project is something it would have flagged.
 **v0.1, draft.** In use on one real project. The format will change; it is markdown
 frontmatter, so migration is a rename.
 
-Weave manages itself under its own rules — `project.yaml`, `decisions/` and `current-state.md`
+Nytka manages itself under its own rules — `project.yaml`, `decisions/` and `current-state.md`
 in this repo are the dogfood, and the first bug reports.
 
 ## Prior art

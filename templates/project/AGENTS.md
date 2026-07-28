@@ -4,7 +4,7 @@ Canonical instructions for any AI agent on this project. Most agent tools read t
 the project root directly; where a tool needs its own (`CLAUDE.md`, `.cursor/rules/`), that
 file is a **pointer** to this one, never a copy. Edit this one.
 
-Format: https://github.com/koval-dev/weave
+Format: https://github.com/koval-dev/nytka
 
 <!-- Keep this file under ~150 lines. Longer files get skimmed. -->
 
@@ -78,4 +78,4 @@ a token into a file, a commit message, or a task description.
 
 ## Before finishing
 
-Run lint: `node <path-to-weave>/tools/weave-lint.mjs .`
+Run lint: `node <path-to-nytka>/tools/nytka-lint.mjs .`

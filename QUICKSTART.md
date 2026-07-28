@@ -1,7 +1,7 @@
 ---
 type: Guide
-title: Weave quickstart for agents
-description: The minimum an agent needs to work in a weave project or start one
+title: Nytka quickstart for agents
+description: The minimum an agent needs to work in a nytka project or start one
 status: draft
 ---
 
@@ -9,7 +9,7 @@ status: draft
 
 For an agent that needs to act now. The full format is [SPEC.md](SPEC.md).
 
-## If the project already uses weave
+## If the project already uses nytka
 
 1. Read `project.yaml` — what exists, where components live, how tasks are tracked.
 2. Read `AGENTS.md` — project-specific rules. **It overrides this file and the spec.**
@@ -77,7 +77,7 @@ stale_after: 2027-01-01   # if it describes anything that moves
 ## Before you finish
 
 ```
-node tools/weave-lint.mjs .
+node tools/nytka-lint.mjs .
 ```
 
 Fix what it reports, or record why you are not.

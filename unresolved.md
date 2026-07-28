@@ -1,6 +1,6 @@
 ---
 type: Unresolved
-title: Open questions on the weave format
+title: Open questions on the nytka format
 status: draft
 generated: { by: claude-opus-5, at: 2026-07-27 }
 ---
@@ -28,7 +28,7 @@ without prompting. Drop the ones that were not.
 
 ---
 
-## Should weave ship a `query` tool, or stay a format?
+## Should nytka ship a `query` tool, or stay a format?
 
 **Status:** open
 
@@ -43,7 +43,7 @@ relevant files, reconsider. Below that, a directory listing is the index.
 
 ---
 
-## How does weave handle multiple projects?
+## How does nytka handle multiple projects?
 
 **Status:** open
 
@@ -79,14 +79,14 @@ clean, make it required.
 
 **Status:** open
 
-Weave borrows OKF's vocabulary and adds `confidence` and the supersede pair. OKF v0.2 already
+Nytka borrows OKF's vocabulary and adds `confidence` and the supersede pair. OKF v0.2 already
 made breaking changes to v0.1 (`timestamp` → `generated`, body citations → structured
-`sources`). If it keeps moving, weave either follows and breaks packages, or diverges and
+`sources`). If it keeps moving, nytka either follows and breaks packages, or diverges and
 loses the compatibility argument.
 
-**Working rule:** track OKF field *names* where they overlap; do not adopt OKF features weave
-has no use for (Attested Computations). Never rename a weave field just because OKF did —
+**Working rule:** track OKF field *names* where they overlap; do not adopt OKF features nytka
+has no use for (Attested Computations). Never rename a nytka field just because OKF did —
 weigh the breakage.
 
-**Decision trigger:** OKF v1.0, or the first weave-shaped need for attested computations
+**Decision trigger:** OKF v1.0, or the first nytka-shaped need for attested computations
 (likely a reporting client, not a content project).

@@ -1,8 +1,8 @@
 #!/usr/bin/env node
-// weave-lint — health check for a weave project package.
-// Zero dependencies. Usage: node weave-lint.mjs [dir] [--json] [--today YYYY-MM-DD]
+// nytka-lint — health check for a nytka project package.
+// Zero dependencies. Usage: node nytka-lint.mjs [dir] [--json] [--today YYYY-MM-DD]
 //
-// Parses only the weave frontmatter subset (SPEC.md §5): scalars, inline {a: b} maps,
+// Parses only the nytka frontmatter subset (SPEC.md §5): scalars, inline {a: b} maps,
 // inline [a, b] lists, and "- " list items including inline maps. That is deliberate —
 // a full YAML parser would be a dependency, and the vocabulary is small on purpose.
 
@@ -117,7 +117,7 @@ function walk (dir, acc = []) {
 // ---------------------------------------------------------------- checks
 
 if (!existsSync(root)) {
-  console.error(`weave-lint: no such directory: ${root}`)
+  console.error(`nytka-lint: no such directory: ${root}`)
   process.exit(2)
 }
 
@@ -289,7 +289,7 @@ if (asJson) {
   console.log(JSON.stringify({ root, today: TODAY, counts, findings }, null, 2))
 } else {
   const mark = { error: 'ERROR', warn: 'WARN ', info: 'INFO ' }
-  console.log(`weave-lint — ${root}  (today ${TODAY})\n`)
+  console.log(`nytka-lint — ${root}  (today ${TODAY})\n`)
   if (!findings.length) console.log('  clean — no findings\n')
   let lastFile = null
   for (const f of findings) {

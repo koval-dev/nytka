@@ -1,7 +1,7 @@
 ---
 type: Procedure
-title: Initialize a new weave project
-description: Scaffold a weave package for a project that has no existing context
+title: Initialize a new nytka project
+description: Scaffold a nytka package for a project that has no existing context
 status: draft
 generated: { by: claude-opus-5, at: 2026-07-27 }
 ---
@@ -20,7 +20,7 @@ If context already exists in any form, use `adopt-existing.md` instead.
 ### 1. Copy the template
 
 ```bash
-cp -R weave/templates/project my-project
+cp -R nytka/templates/project my-project
 cd my-project && git init
 ```
 
@@ -74,15 +74,15 @@ reconstructed rationale, which is worth much less than the real one.
 ### 7. Lint and commit
 
 ```bash
-node /path/to/weave/tools/weave-lint.mjs .
-git add -A && git commit -m "Initialize weave project package"
+node /path/to/nytka/tools/nytka-lint.mjs .
+git add -A && git commit -m "Initialize nytka project package"
 ```
 
 ---
 
 ## Approval points
 
-None — a new project has nothing to damage. This is the one weave procedure that is safe to
+None — a new project has nothing to damage. This is the one nytka procedure that is safe to
 run unsupervised.
 
 ## Failure conditions

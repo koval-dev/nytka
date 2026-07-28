@@ -1,6 +1,6 @@
 ---
 type: Decision
-title: Tool integration is a pointer, and weave ships one launcher skill
+title: Tool integration is a pointer, and nytka ships one launcher skill
 status: stable
 verified:
   - { by: "human:mike", at: 2026-07-27 }
@@ -11,7 +11,7 @@ supersedes: null
 superseded_by: null
 ---
 
-# 0005 — Tool integration is a pointer, and weave ships one launcher skill
+# 0005 — Tool integration is a pointer, and nytka ships one launcher skill
 
 ## Decision
 
@@ -19,7 +19,7 @@ superseded_by: null
 **only** for a tool that will not read `AGENTS.md` itself, and when created it references
 rather than restates.
 
-Weave ships one launcher skill at `skills/weave/SKILL.md`. It resolves the weave repo and
+Nytka ships one launcher skill at `skills/nytka/SKILL.md`. It resolves the nytka repo and
 routes to a procedure. It contains no format content and is installed by symlink.
 
 ## Reason
@@ -42,7 +42,7 @@ the file at load time. Both are pointers — neither copies.
 
 The skill is a launcher because the alternative is a bundle. A skill that carried its own copy
 of `templates/project/` would be a second writable source for every scaffold file (P2), and one
-that restated the format would be a second spec (0001). Resolving `$WEAVE` at run time keeps
+that restated the format would be a second spec (0001). Resolving `$NYTKA` at run time keeps
 one source and makes the skill location-independent, which is why it can be a single symlinked
 file rather than an installed directory.
 
@@ -50,11 +50,11 @@ file rather than an installed directory.
 
 - The table above is a **dated observation about three tools that ship weekly**, not a fact.
   It carries `stale_after: 2027-01-27` so lint reopens it. It lives here and nowhere else;
-  `procedures/init-project.md` and `skills/weave/SKILL.md` link to it rather than repeat it.
-- Weave now has a second entry point to keep honest. The skill is allowed to route and to
+  `procedures/init-project.md` and `skills/nytka/SKILL.md` link to it rather than repeat it.
+- Nytka now has a second entry point to keep honest. The skill is allowed to route and to
   resolve paths; the moment it starts explaining frontmatter, it has become a spec fork and
   should be cut back.
 - Installation is documented as a symlink. A copied `SKILL.md` is a fork that will drift
   silently, in exactly the way this format exists to make visible.
-- Weave still works with no skill installed. Pasting the SPEC.md URL remains the supported
+- Nytka still works with no skill installed. Pasting the SPEC.md URL remains the supported
   path, and the skill must never become the only way in.

@@ -1,7 +1,7 @@
 schemaVersion: "0.1"
 
-id: weave
-name: Weave
+id: nytka
+name: Nytka
 type: side-project
 status: active
 
@@ -16,7 +16,7 @@ purpose:
 owners:
   projectOwner: Mike
 
-# Weave manages itself under its own rules. This repo IS a weave package — the dogfood,
+# Nytka manages itself under its own rules. This repo IS a nytka package — the dogfood,
 # and the first source of bug reports.
 components:
   spec:
@@ -27,7 +27,7 @@ components:
     role: scaffold copied when starting a new project
   tools:
     path: tools
-    role: weave-lint — zero-dependency health check
+    role: nytka-lint — zero-dependency health check
 
 capabilities:
   - context-format-design
