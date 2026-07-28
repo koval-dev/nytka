@@ -3,6 +3,21 @@
 Instructions for working **on** nytka itself. If you are looking for how to *use* nytka on a
 project, read [SPEC.md](SPEC.md) or [QUICKSTART.md](QUICKSTART.md) instead.
 
+## Which repo is this
+
+**This repo holds rules only — no code, no packages, ever.** `SPEC.md`, templates, procedures
+and `nytka-lint`. Its value is that it is readable with nothing installed; a build toolchain
+here destroys that.
+
+**Tools live in `koval-dev/kd-nytka`** — the CLI, plugins and connectors published as
+`@nytka/*`.
+
+If you are about to add a package, a dependency or a build step here, stop — it belongs in
+that repo. The full record lives there, as its decision 0006; do not restate it here.
+
+`tools/nytka-lint.mjs` is not an exception: lint is the conformance rules expressed as code
+rather than prose, and runs on bare `node` with nothing installed.
+
 ## Reading order
 
 1. `SPEC.md` — the format. Normative and self-contained.
