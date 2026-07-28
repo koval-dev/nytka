@@ -12,6 +12,46 @@ not architecture — do not cite one as a decision.
 
 ---
 
+## Where do durable non-text files go, and how do they carry provenance?
+
+**Status:** open
+
+Raised 2026-07-28 by the first real case: a logo for the line itself, followed by the
+observation that there will be many such files — screenshots, exported diagrams, vendor PDFs.
+
+Two gaps, and the second is the structural one.
+
+**`artifacts/` is undefined.** It appears twice in the whole repo: one line in `SPEC.md` §3
+(*"outputs worth referencing"*) and one row in `procedures/ingest.md` (*"A completed output →
+`artifacts/`"*). No section, no template directory, no rules — compare `datasets/`, which gets
+§9 and a schema. And a logo is not an *output*: the format sorts things into knowledge
+(`research/`), evidence (`datasets/`) and outputs (`artifacts/`), and has no category for a
+durable **input** the project consumes. Left as is, `artifacts/` becomes the junk drawer.
+
+**Nothing that is not markdown can carry provenance.** §5 requires frontmatter on markdown, and
+the entire trust model — `verified`, `confidence`, `stale_after`, the derived trust tiers —
+rides on it. A `.png` carries none of it, so a raw file in a folder is invisible to the format:
+no source, no date, no way to tell whether it is current. This is not a documentation gap; it
+is a hole in the thing the format exists to provide.
+
+`datasets/index.json` is the one existing answer to *"a file that cannot describe itself"* —
+but it was built for the opposite case. Payloads there are large, gitignored, expiring and
+queried by script. A logo is small, committed, canonical and does not expire. The registry
+shape transfers; the storage rule inverts.
+
+**Working rule:** raw files go in `artifacts/` in the repo that uses them, with an
+`artifacts/index.json` alongside carrying `id`, `file`, `summary`, `addedAt`, `source` and
+`status` — the `datasets/index.json` shape, payloads committed rather than ignored. Purely
+additive, so §13 liberal conformance keeps existing packages valid. A worked instance is in
+`kd-nytka/artifacts/`, decided there as 0005.
+
+**Decision trigger:** the second repo that needs the same asset, or the first time an agent has
+to answer *"is this file current?"* about something with no frontmatter. Either fires during
+FMT-003, which is where friction like this is meant to surface. Settle it before `RT-002`
+builds a loader against whatever `artifacts/` turns out to mean.
+
+---
+
 ## Is the frontmatter vocabulary worth its cost?
 
 **Status:** open
