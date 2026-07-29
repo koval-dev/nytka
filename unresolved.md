@@ -46,9 +46,87 @@ additive, so §13 liberal conformance keeps existing packages valid. A worked in
 `kd-nytka/artifacts/`, decided there as 0005.
 
 **Decision trigger:** the second repo that needs the same asset, or the first time an agent has
-to answer *"is this file current?"* about something with no frontmatter. Either fires during
-FMT-003, which is where friction like this is meant to surface. Settle it before `RT-002`
-builds a loader against whatever `artifacts/` turns out to mean.
+to answer *"is this file current?"* about something with no frontmatter. Settle it before a
+loader is built against whatever `artifacts/` turns out to mean.
+
+The trigger previously named FMT-003 — the hand-run gate — as where this friction would
+surface. That gate was removed and FMT-003 closed on 2026-07-28; friction now surfaces in the
+work that hits it, which is what the three entries below are.
+
+---
+
+## Is there a category for collected data that is registered but never read?
+
+**Status:** open
+
+Raised 2026-07-28 by the first connectors, which had nowhere in the format to put what they
+collected.
+
+`datasets/` and its `index.json` are specified (§9) and the registry works. What is not
+specified is where the **payload** goes — the raw API response a connector fetched, which may
+be megabytes, is regenerable, expires, and must **never** be loaded into an agent's context.
+The spec's categories all assume something is meant to be read: `research/` is knowledge,
+`artifacts/` is outputs, `datasets/` is evidence a human or agent consults.
+
+`datasets/payloads/` was invented outside this repo to hold it, along with the rule that a
+payload is registered and queried by script but never read into context. That rule is doing
+real work and is written down nowhere normative.
+
+**Working rule:** payloads go in `datasets/payloads/`, gitignored, registered in
+`datasets/index.json`, and never loaded into an agent's context. The registry entry — not the
+payload — is what a reader consults.
+
+**Decision trigger:** the second independent implementation of a connector, or the first time
+an agent loads a payload into context because nothing told it not to. Additive either way, so
+§13 liberal conformance holds.
+
+---
+
+## Does `datasets/index.json` have a serialisation contract?
+
+**Status:** open
+
+A registry meant to be reviewed by humans in diffs has a formatting contract, and §9 does not
+state it. Found 2026-07-28: a connector appending one entry with a plain
+`JSON.stringify(x, null, 2)` reformatted all five existing entries, turning 78 lines into 97
+and making the diff unreviewable. The fix was a width-calibrated formatter, written per
+implementation because nothing specifies the target.
+
+This is small and it is not cosmetic. The file's value is that a human can see what changed;
+a writer that reflows the whole file destroys that on every append, and every independent
+implementation will rediscover it.
+
+**Working rule:** an appending writer must not reformat entries it did not touch. Match the
+existing file's shape rather than re-serialising it.
+
+**Decision trigger:** the second independent writer of `index.json`. Either §9 gains a stated
+shape, or the rule stays "preserve what you did not touch" and says so.
+
+---
+
+## Where does a record of an external mutation live?
+
+**Status:** open
+
+The format is built around **collecting**: `datasets/` with `collectedAt` and `validUntil`,
+provenance describing what was read and when. It has no shape for *"an agent changed something
+in a system outside this repo — here is the before state, the after state, and what is needed
+to reverse it."*
+
+Raised 2026-07-28 when the first write-capable connector was specified. The nearest fit is
+`artifacts/`: a mutation record is an output, but one whose entire value is auditability, which
+is not what `artifacts/` was described for. Registering it in `datasets/` would be worse — a
+change is not an observation, and it has no payload and no validity window.
+
+This compounds with the first question above. `artifacts/` is already the least specified
+directory in the format, and it is now the proposed home for two unlike things.
+
+**Working rule:** `artifacts/`, carrying the before state, the after state, and the identifier
+needed to reverse the change.
+
+**Decision trigger:** the first mutation run against a real external system. If `artifacts/`
+carries it comfortably, this closes as a note in SPEC §3; if it does not, the format needs a
+category and that run is the evidence for it.
 
 ---
 

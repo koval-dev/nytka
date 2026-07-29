@@ -20,6 +20,23 @@ and manage this project according to it.
 [SPEC.md](SPEC.md) is normative and self-contained — one link is the whole format.
 [QUICKSTART.md](QUICKSTART.md) is the short version for an agent that needs to act now.
 
+## Two ways to use it
+
+**Read it and install nothing.** Everything in this repo — the spec, the templates, the
+procedures, the lint script — is meant to be read and copied. Your agent is the runtime.
+
+**Or install the packages.** `@nytka/cli` gives you `nytka` as a command, and `@nytka/plugin-*`
+are connectors that collect real data into a project's `datasets/`. They live in a separate
+repo (`koval-dev/kd-nytka`) so that this one stays readable with nothing installed.
+
+```
+npx @nytka/cli lint .        # same checks as tools/nytka-lint.mjs, nothing to clone
+npx @nytka/cli add plugin-gsc
+```
+
+The two lanes are the same format. Nothing here requires the packages, and the packages do not
+replace anything here. Verified 2026-07-29 against the npm registry.
+
 ## The problem it solves
 
 Project knowledge does not become obviously wrong. It becomes *plausibly* wrong.
@@ -94,19 +111,29 @@ query loads the narrowest level that answers a question; lint checks what rotted
 ## Lint
 
 ```
-node tools/nytka-lint.mjs /path/to/project
+node tools/nytka-lint.mjs /path/to/project     # committed here, nothing to install
+npx @nytka/cli lint /path/to/project           # same checks, nothing to clone
 ```
 
 Zero dependencies. Checks expiry dates, unverified external claims, decision-graph
 consistency, dangling links, missing `type`, and staleness of `current-state.md`.
+
+Both run the same checks, because they are the same code: `tools/nytka-lint.mjs` is a
+generated read-only copy of the source in `@nytka/cli`, regenerated on release and drift-tested.
+Do not edit it here.
 
 Lint is the operation most projects skip and the one that pays. Nearly every knowledge
 failure in a real project is something it would have flagged.
 
 ## Status
 
-**v0.1, draft.** In use on one real project. The format will change; it is markdown
-frontmatter, so migration is a rename.
+**v0.1, draft.** In use on one real project, and exercised from a second direction by a line of
+published connectors that write into a project's `datasets/`. The format will change; it is
+markdown frontmatter, so migration is a rename.
+
+A connector is tooling, not an adopting project, so the parts only a second adopter would
+stress — `artifacts/`, agent-reported numbers — are still untested. See
+[unresolved.md](unresolved.md).
 
 Nytka manages itself under its own rules — `project.yaml`, `decisions/` and `current-state.md`
 in this repo are the dogfood, and the first bug reports.

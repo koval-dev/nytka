@@ -15,8 +15,31 @@ here destroys that.
 If you are about to add a package, a dependency or a build step here, stop — it belongs in
 that repo. The full record lives there, as its decision 0006; do not restate it here.
 
-`tools/nytka-lint.mjs` is not an exception: lint is the conformance rules expressed as code
-rather than prose, and runs on bare `node` with nothing installed.
+### The rule that decides it
+
+**If it needs to be installed, it ships from `kd-nytka`. If it only needs to be linked or
+referenced, with no installation, it lives here.**
+
+Stated by the owner on 2026-07-29 and recorded as that repo's decision 0009. Two lanes, two
+people: someone who reads the philosophy and installs nothing, and someone who installs the
+packages and wants a working command. Both must stay whole.
+
+Apply it; do not re-argue it. `SPEC.md`, templates and procedures are referenced, so they stay
+here. The next artefact that looks like it belongs to both lanes probably has a source and an
+artefact that belong to different ones — which is exactly what happened to lint.
+
+### `tools/nytka-lint.mjs` is a generated file
+
+**Do not edit it.** Its writable source is `@nytka/cli` in `kd-nytka`; this is a read-only copy,
+regenerated on release and checked by a drift test there. SPEC P2 permits generated views on
+exactly those terms — one writable definition of conformance, synced in one direction.
+
+It stays committed, one file, zero dependencies, runnable under bare `node`, because a reader
+who installs nothing must still be able to lint. That property is what makes vendoring possible
+at all, not politeness inherited from [0003](decisions/0003-lint-zero-dependencies.md).
+
+The file's own header says all of this. This section exists because the header is only read by
+someone who already opened the file.
 
 ## Reading order
 
@@ -79,6 +102,11 @@ the file header. If the vocabulary needs syntax the parser cannot handle, that i
 against the syntax.
 
 Lint checks **form, never truth**. Do not add checks that pretend to verify facts.
+
+Changes to lint's behaviour are made in `kd-nytka` and arrive here as a regenerated file — see
+above. What belongs here is lint's *documentation*: [procedures/lint.md](procedures/lint.md),
+the rules for what may become an error, and the worked examples. Rules are referenced;
+implementations are installed.
 
 ## Documentation voice
 
