@@ -1,5 +1,5 @@
 version: 1
-updated: "2026-07-28"
+updated: "2026-07-29"
 
 # Nytka's own backlog. Schema: SPEC.md §8.
 
@@ -97,3 +97,107 @@ tasks:
       - "procedures/lint.md contains a runnable example of a truth-checking script"
     created: 2026-07-27
     updated: 2026-07-27
+
+  - id: TOOL-002
+    title: "Write down the rules for adding a lint check"
+    status: todo
+    priority: medium
+    owner: mike
+    blockedBy: []
+    context: |
+      procedures/lint.md lists which check is error, warn or info. Nothing states the rule
+      that produced that split, so anyone adding a check inherits a table to copy rather than
+      a principle to apply. Four rules were articulated in a kd-nytka session on 2026-07-29
+      and appear nowhere in this repo:
+
+      1. An error is never a matter of taste. Error means the package contradicts itself or
+         the calendar. Warn means a human should look. Info is FYI.
+      2. Lint never requires configuration. A rule that needs configuring is a preference,
+         and preferences belong in AGENTS.md where a human reads them. A config file is how a
+         linter becomes negotiable.
+      3. A new check enters as info or warn and is promoted to error only after it has been
+         right in practice. A check that errors wrongly on day one teaches people to ignore
+         the tool.
+      4. Lint reads what the project declares and silently skips what does not apply.
+         SPEC.md:138 already offers `tracker: file | github-projects | linear | jira`; a check
+         assuming one of them is noise to a project on another, and a linter that warns about
+         a platform you do not use is a linter people stop running.
+
+      Rule 4 has a consumer waiting — it is the precondition for TOOL-004.
+
+      Separately, AGENTS.md line 18 calls lint "the conformance rules expressed as code".
+      §13 names three conformance requirements; lint errors on six checks, of which `stale`,
+      `decision-graph` and `dataset` are not conformance failures at all. The code draws the
+      boundary correctly and that sentence does not.
+    acceptanceCriteria:
+      - "the four rules are recorded where 0003 is, or in AGENTS.md, and are reachable from procedures/lint.md"
+      - "AGENTS.md no longer describes lint as the conformance rules expressed as code"
+      - "node tools/nytka-lint.mjs . passes with zero errors"
+    created: 2026-07-29
+    updated: 2026-07-29
+
+  - id: TOOL-003
+    title: "Lint the four project.yaml fields SPEC §13 requires"
+    status: todo
+    priority: medium
+    owner: mike
+    blockedBy: []
+    context: |
+      §13.1 requires project.yaml to carry `schemaVersion`, `id`, `name` and `status`. Lint's
+      C1 checks that the file exists and reads none of it. The most precisely specified
+      conformance requirement in the spec is the one nothing enforces.
+
+      The likely cause is that the hand-rolled parser reads frontmatter blocks delimited by
+      `---`, not standalone YAML documents. Confirm that before choosing a fix — if the same
+      subset parser can read project.yaml as it stands, this is a few lines.
+
+      0003 binds regardless: whatever this costs, it costs zero dependencies.
+    acceptanceCriteria:
+      - "a project.yaml missing any of the four fields produces an error-level finding"
+      - "the message names the missing field, not just the file"
+      - "tools/nytka-lint.mjs still has zero dependencies"
+    created: 2026-07-29
+    updated: 2026-07-29
+
+  - id: TOOL-004
+    title: "Check tasks.yaml internal consistency when tracker is `file`"
+    status: blocked
+    priority: medium
+    owner: mike
+    blockedBy: [SPEC-002, TOOL-002]
+    context: |
+      Lint does not read tasks.yaml at all. Three stale-status errors in kd-nytka on
+      2026-07-28 — a task marked ready whose blocker was not done, a `blockedBy` contradicting
+      the prose directly above it — all passed a clean lint. Each was caught by hand, and each
+      time only after someone had already acted on it.
+
+      Two structural checks would have caught all three:
+        - a `blockedBy` naming a task id that does not exist
+        - a task not marked blocked while something it depends on is not done
+
+      Both need to know which status means done, which is SPEC-002's to name. Both must be
+      gated on the project declaring `tasks.tracker: file` (SPEC.md:260), which is TOOL-002
+      rule 4. TOOL-003 hits the same standalone-YAML parsing question; whichever lands first
+      should solve it for both.
+
+      A third check was proposed and dropped after being tried: "marked blocked while all its
+      blockers are done". Run against kd-nytka on 2026-07-29 it fired immediately on PLG-012,
+      which is `blocked` with an empty `blockedBy` and says why in its own context — it waits
+      on an external credential approval, not on any task. That is legitimate and permanent, so
+      the check would emit the same finding forever, which is how a linter trains people to
+      stop reading it. Do not add it back without a way to distinguish a stale block from an
+      external one, and note that this is TOOL-002 rule 3 arriving as evidence rather than as
+      an opinion.
+
+      Deliberately excluded: any check on the status vocabulary itself. kd-nytka/AGENTS.md is
+      explicit that its four statuses are that repo's convention and not a spec rule. Baking
+      them into a tool every nytka project runs would promote one repo's habit into a standard
+      by accident — the exact failure SPEC-002 exists to fix properly.
+    acceptanceCriteria:
+      - "a blockedBy pointing at a non-existent task id is an error"
+      - "a task whose blockers are not all done, and which is not itself marked blocked, is an error"
+      - "a project declaring any tracker other than `file` produces no tasks.yaml findings at all"
+      - "no check constrains which status words a project uses"
+      - "tools/nytka-lint.mjs still has zero dependencies"
+    created: 2026-07-29
+    updated: 2026-07-29
