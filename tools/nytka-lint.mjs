@@ -13,7 +13,10 @@ const args = process.argv.slice(2)
 const root = resolve(args.find(a => !a.startsWith('--')) ?? '.')
 const asJson = args.includes('--json')
 const todayArg = args.find(a => a.startsWith('--today='))
-const TODAY = todayArg ? todayArg.split('=')[1] : new Date().toISOString().slice(0, 10)
+// Local calendar date, not toISOString().slice(0, 10) — that converts to UTC first, so
+// anywhere west of Greenwich an evening run stamps tomorrow's date.
+const isoDate = d => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+const TODAY = todayArg ? todayArg.split('=')[1] : isoDate(new Date())
 
 const SKIP_DIRS = new Set(['.git', 'node_modules', 'private', '.claude', 'templates'])
 // Files exempt from the frontmatter requirement (SPEC.md §13).
