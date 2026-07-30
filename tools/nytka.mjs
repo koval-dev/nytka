@@ -24,12 +24,27 @@ import { spawnSync } from 'node:child_process'
 
 const HERE = dirname(fileURLToPath(import.meta.url))
 const argv = process.argv.slice(2)
-const flag = name => {
-  const hit = argv.find(a => a.startsWith(`--${name}=`))
-  return hit ? hit.split('=').slice(1).join('=') : null
+
+// Both --name=value and --name value. Every flag this tool has takes a value, so a bare one
+// is a mistake rather than a boolean: `task list --status todo` used to drop "todo" into the
+// positionals and list everything, which reads as "no filter matched nothing".
+const VALUE_FLAGS = new Set(['today', 'status'])
+const flags = {}
+const positional = []
+const flagErrors = []
+for (let k = 0; k < argv.length; k++) {
+  const a = argv[k]
+  if (!a.startsWith('--') || a === '--help') { positional.push(a); continue }
+  const eq = a.indexOf('=')
+  if (eq !== -1) { flags[a.slice(2, eq)] = a.slice(eq + 1); continue }
+  const name = a.slice(2)
+  if (!VALUE_FLAGS.has(name)) { flagErrors.push(`unknown option --${name}`); continue }
+  const next = argv[k + 1]
+  if (next === undefined || next.startsWith('--')) flagErrors.push(`--${name} needs a value`)
+  else flags[name] = argv[++k]
 }
+const flag = name => (typeof flags[name] === 'string' ? flags[name] : null)
 const TODAY = flag('today') ?? new Date().toISOString().slice(0, 10)
-const positional = argv.filter(a => !a.startsWith('--'))
 
 // ------------------------------------------------------------------ yaml subset
 
@@ -82,12 +97,15 @@ function scalar (raw) {
   return v
 }
 
-function parseYaml (text) {
+export function parseYaml (text, source = 'YAML') {
   const lines = text.split('\n').map((raw, n) => ({
     n, raw, body: stripComment(raw), indent: raw.match(/^ */)[0].length
   }))
   let i = 0
   const skip = () => { while (i < lines.length && !lines[i].body.trim()) i++ }
+  const fail = (L, msg) => {
+    throw new Error(`${source}:${L.n + 1}: ${msg}\n    ${L.raw.trim()}`)
+  }
 
   function readBlock (parentIndent, style) {
     const buf = []
@@ -112,20 +130,101 @@ function parseYaml (text) {
     return buf.join('\n')
   }
 
+  // A quoted or bracketed value may wrap onto following, more-indented lines — legal YAML,
+  // and used throughout this line's backlogs. Consuming those lines is what stops the parser
+  // walking off the end of the structure and abandoning every task that follows.
+
+  function takeQuoted (t) {
+    const q = t[0]
+    let out = ''
+    for (let k = 1; k < t.length; k++) {
+      const ch = t[k]
+      if (q === '"' && ch === '\\') {
+        const nx = t[k + 1]
+        out += nx === 'n' ? '\n' : nx === 't' ? '\t' : nx ?? ''
+        k++
+        continue
+      }
+      if (ch === q) {
+        if (q === "'" && t[k + 1] === "'") { out += "'"; k++; continue }
+        return out
+      }
+      out += ch
+    }
+    return null   // no closing quote on the text so far
+  }
+
+  function balanced (t) {
+    let depth = 0, q = null
+    for (const ch of t) {
+      if (q) { if (ch === q) q = null; continue }
+      if (ch === '"' || ch === "'") { q = ch; continue }
+      if (ch === '[' || ch === '{') depth++
+      else if (ch === ']' || ch === '}') depth--
+    }
+    return depth <= 0
+  }
+
+  // Reads a value starting on `rest`, folding any continuation lines into it.
+  function readValue (rest, ownerIndent, startLine) {
+    let t = rest.trim()
+
+    if (t[0] === '"' || t[0] === "'") {
+      let done = takeQuoted(t)
+      while (done === null) {
+        if (i >= lines.length) fail(startLine, 'unterminated quoted string')
+        const L = lines[i]
+        // raw, not body: a # inside the string is not a comment
+        if (!L.raw.trim()) { t += '\n'; i++ } else {
+          if (L.indent <= ownerIndent) fail(startLine, 'unterminated quoted string')
+          t += (t.endsWith('\n') ? '' : ' ') + L.raw.trim()
+          i++
+        }
+        done = takeQuoted(t)
+      }
+      return done
+    }
+
+    if (t[0] === '[' || t[0] === '{') {
+      while (!balanced(t)) {
+        if (i >= lines.length) fail(startLine, 'unterminated flow collection')
+        const L = lines[i]
+        if (!L.body.trim()) { i++; continue }
+        if (L.indent <= ownerIndent) fail(startLine, 'unterminated flow collection')
+        t += ' ' + L.body.trim()
+        i++
+      }
+      return scalar(t)
+    }
+
+    while (i < lines.length) {           // plain scalar: YAML folds deeper lines into it
+      const L = lines[i]
+      if (!L.body.trim() || L.indent <= ownerIndent) break
+      const s = L.body.trim()
+      if (/^-(\s|$)/.test(s) || /^[A-Za-z_][\w.-]*\s*:(\s|$)/.test(s)) break
+      t += ' ' + s
+      i++
+    }
+    return scalar(t)
+  }
+
   function parseMap (indent) {
     const out = {}
     while (true) {
       skip()
       if (i >= lines.length) break
       const L = lines[i]
-      if (L.indent !== indent) break
-      const m = L.body.trim().match(/^([A-Za-z_][\w.-]*)\s*:\s*(.*)$/)
-      if (!m) break
+      if (L.indent < indent) break                 // dedent — this map is finished
+      if (L.indent > indent) fail(L, `unexpected indentation, expected ${indent} spaces`)
+      const s = L.body.trim()
+      if (/^-(\s|$)/.test(s)) break                // a list item ends the map
+      const m = s.match(/^([A-Za-z_][\w.-]*)\s*:\s*(.*)$/)
+      if (!m) fail(L, 'expected "key: value"')
       const [, key, rest] = m
       i++
       if (/^[|>]-?\+?$/.test(rest.trim())) out[key] = readBlock(indent, rest.trim()[0])
-      else if (rest.trim() === '') { const c = parseNode(indent + 1); out[key] = c === null ? '' : c }
-      else out[key] = scalar(rest)
+      else if (rest.trim() === '') { const c = parseNode(indent + 1, indent); out[key] = c === null ? '' : c }
+      else out[key] = readValue(rest, indent, L)
     }
     return out
   }
@@ -136,38 +235,50 @@ function parseYaml (text) {
       skip()
       if (i >= lines.length) break
       const L = lines[i]
-      if (L.indent !== indent || !/^-(\s|$)/.test(L.body.trim())) break
+      if (L.indent < indent) break
+      if (L.indent > indent) fail(L, `unexpected indentation in list, expected ${indent} spaces`)
+      const s = L.body.trim()
+      if (!/^-(\s|$)/.test(s)) break                // a key ends the list
       const lineNo = L.n
-      const rest = L.body.trim().replace(/^-\s*/, '')
+      const rest = s.replace(/^-\s*/, '')
       if (/^[A-Za-z_][\w.-]*\s*:/.test(rest)) {
-        const childIndent = indent + 2
+        const dash = L.raw.indexOf('-', L.indent)
+        const off = L.raw.slice(dash + 1).search(/\S/)
+        const childIndent = off === -1 ? indent + 2 : dash + 1 + off
         lines[i] = { n: lineNo, raw: L.raw, body: ' '.repeat(childIndent) + rest, indent: childIndent }
         const item = parseMap(childIndent)
         Object.defineProperty(item, '__line', { value: lineNo, enumerable: false })
         out.push(item)
-      } else { i++; out.push(scalar(rest)) }
+      } else { i++; out.push(readValue(rest, indent, L)) }
     }
     return out
   }
 
-  function parseNode (minIndent) {
+  function parseNode (minIndent, listAt = null) {
     skip()
     if (i >= lines.length) return null
     const L = lines[i]
+    const item = /^-(\s|$)/.test(L.body.trim())
+    if (item && listAt !== null && L.indent === listAt) return parseList(L.indent)
     if (L.indent < minIndent) return null
-    return /^-(\s|$)/.test(L.body.trim()) ? parseList(L.indent) : parseMap(L.indent)
+    return item ? parseList(L.indent) : parseMap(L.indent)
   }
 
-  return parseNode(0) ?? {}
+  const doc = parseNode(0) ?? {}
+  skip()
+  // Reaching here with lines left means a construct was not understood. Returning the part
+  // that parsed would be a believable half-answer, which is worse than no answer at all.
+  if (i < lines.length) fail(lines[i], 'unparsed content after the end of the document')
+  return doc
 }
 
-function frontmatter (text) {
+function frontmatter (text, source = 'document') {
   if (!text.startsWith('---')) return { fm: {}, body: text }
   const end = text.indexOf('\n---', 3)
   if (end === -1) return { fm: {}, body: text }
   const block = text.slice(text.indexOf('\n') + 1, end)
   const body = text.slice(text.indexOf('\n', end + 1) + 1)
-  return { fm: parseYaml(block), body }
+  return { fm: parseYaml(block, `${source} frontmatter`), body }
 }
 
 // ------------------------------------------------------------------ project
@@ -192,7 +303,7 @@ function requireRoot () {
   return ROOT
 }
 
-const loadProject = () => parseYaml(readFileSync(join(requireRoot(), 'project.yaml'), 'utf8'))
+const loadProject = () => parseYaml(readFileSync(join(requireRoot(), 'project.yaml'), 'utf8'), 'project.yaml')
 
 function tasksPath () {
   const p = loadProject()
@@ -203,7 +314,7 @@ function tasksPath () {
 function loadTasks () {
   const file = tasksPath()
   if (!existsSync(file)) return { file, doc: { tasks: [] }, list: [] }
-  const doc = parseYaml(readFileSync(file, 'utf8'))
+  const doc = parseYaml(readFileSync(file, 'utf8'), relative(ROOT, file))
   return { file, doc, list: Array.isArray(doc.tasks) ? doc.tasks : [] }
 }
 
@@ -341,7 +452,15 @@ function cmdTask (sub, id, arg) {
   if (!sub || sub === 'list') {
     const want = flag('status')
     const rows = list.filter(t => !want || t.status === want)
-    if (!rows.length) { console.log('\n  no tasks\n'); return }
+    if (!rows.length) {
+      // "no tasks" for an unrecognised status would read as an empty backlog. Name the ones
+      // that are actually in the file instead.
+      if (want) {
+        const have = [...new Set(list.map(t => t.status))].sort()
+        console.log(`\n  no task has status "${want}" — this file uses: ${have.join(', ') || 'none'}\n`)
+      } else console.log('\n  no tasks\n')
+      return
+    }
     console.log()
     for (const t of rows) {
       const mark = isActionable(t, byId) && t.status !== 'in_progress' ? '>' : ' '
@@ -429,7 +548,7 @@ function cmdContext (id) {
 
   const csPath = join(root, 'current-state.md')
   if (existsSync(csPath)) {
-    const { body } = frontmatter(readFileSync(csPath, 'utf8'))
+    const { body } = frontmatter(readFileSync(csPath, 'utf8'), 'current-state.md')
     out.push('## Current state', '', body.replace(/^# .*\n/, '').trim(), '')
   }
 
@@ -463,7 +582,7 @@ function cmdContext (id) {
     out.push('## Referenced by this task', '')
     for (const rel of loaded) {
       const raw = readFileSync(join(root, rel), 'utf8')
-      const { body } = rel.endsWith('.md') ? frontmatter(raw) : { body: raw }
+      const { body } = rel.endsWith('.md') ? frontmatter(raw, rel) : { body: raw }
       out.push(`### \`${rel}\``, '', body.trim(), '')
     }
   }
@@ -477,7 +596,7 @@ function cmdContext (id) {
       out.push('## Other decisions in force', '')
       out.push('Titles only. Load one only if it bears on this task.', '')
       for (const f of rest) {
-        const { fm } = frontmatter(readFileSync(join(decDir, f), 'utf8'))
+        const { fm } = frontmatter(readFileSync(join(decDir, f), 'utf8'), `decisions/${f}`)
         out.push(`- \`decisions/${f}\` — ${fm.title ?? '(untitled)'}${fm.status && fm.status !== 'stable' ? ` *(${fm.status})*` : ''}`)
       }
       out.push('')
@@ -521,19 +640,35 @@ function cmdLint (dir) {
 
 // ------------------------------------------------------------------ dispatch
 
-const [cmd, a, b, c] = positional
-switch (cmd) {
-  case 'status': case undefined: cmdStatus(); break
-  case 'next': cmdNext(); break
-  case 'task': cmdTask(a, b, c); break
-  case 'context': cmdContext(a); break
-  case 'init': cmdInit(a); break
-  case 'lint': cmdLint(a); break
-  case 'help': case '--help': case '-h':
-    console.log(readFileSync(fileURLToPath(import.meta.url), 'utf8')
-      .split('\n').filter(l => l.startsWith('//')).map(l => l.slice(3)).join('\n'))
-    break
-  default:
-    console.error(`nytka: unknown command "${cmd}" — try \`nytka help\``)
+const isMain = process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)
+
+if (isMain) {
+  const [cmd, a, b, c] = positional
+  if (flagErrors.length) {
+    for (const e of flagErrors) console.error(`nytka: ${e}`)
+    console.error('       options are --status <value> and --today <YYYY-MM-DD>\n')
     process.exit(2)
+  }
+  try {
+    switch (cmd) {
+      case 'status': case undefined: cmdStatus(); break
+      case 'next': cmdNext(); break
+      case 'task': cmdTask(a, b, c); break
+      case 'context': cmdContext(a); break
+      case 'init': cmdInit(a); break
+      case 'lint': cmdLint(a); break
+      case 'help': case '--help': case '-h':
+        console.log(readFileSync(fileURLToPath(import.meta.url), 'utf8')
+          .split('\n').filter(l => l.startsWith('//')).map(l => l.slice(3)).join('\n'))
+        break
+      default:
+        console.error(`nytka: unknown command "${cmd}" — try \`nytka help\``)
+        process.exit(2)
+    }
+  } catch (err) {
+    // A parse failure must stop the command. Printing a partial backlog as if it were whole
+    // is the one outcome this tool must never produce.
+    console.error(`\nnytka: ${err.message}\n`)
+    process.exit(2)
+  }
 }
