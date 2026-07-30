@@ -40,15 +40,30 @@ Apply it; do not re-argue it. `SPEC.md`, templates and procedures are referenced
 here. The next artefact that looks like it belongs to both lanes probably has a source and an
 artefact that belong to different ones — which is exactly what happened to lint.
 
-### `tools/nytka-lint.mjs` is a generated file
+### Everything in `tools/` is generated
 
-**Do not edit it.** Its writable source is `@nytka/cli` in `kd-nytka`; this is a read-only copy,
-regenerated on release and checked by a drift test there. SPEC P2 permits generated views on
-exactly those terms — one writable definition of conformance, synced in one direction.
+**Do not edit any of it.** The writable source is `@nytka/cli` in `kd-nytka`; these are
+read-only copies, regenerated on release and checked by a drift test there. SPEC P2 permits
+generated views on exactly those terms — one writable definition, synced in one direction.
 
-It stays committed, one file, zero dependencies, runnable under bare `node`, because a reader
-who installs nothing must still be able to lint. That property is what makes vendoring possible
-at all, not politeness inherited from [0003](decisions/0003-lint-zero-dependencies.md).
+```
+tools/nytka.mjs        status · next · task · context · init · lint     ← run this one
+tools/nytka-tasks.mjs  what those commands do
+tools/nytka-lint.mjs   the format checks, also runnable directly
+tools/nytka-yaml.mjs   the one YAML reader, shared by both
+```
+
+They stay committed, dependency-free and runnable under bare `node`, because a reader who
+installs nothing must still be able to lint and to work a backlog. That property is what makes
+vendoring possible at all, not politeness inherited from
+[0003](decisions/0003-lint-zero-dependencies.md).
+
+**They import each other by relative path, so keep them together.** That is 0010 in `kd-nytka`,
+which traded 0009's one-file rule for a shared parser — the two tools each had their own until
+2026-07-30, and the two disagreed. A relative import needs no `node_modules`, so the zero-install
+promise is unchanged; copying one file out of the four is what breaks now.
+
+Or install it and skip all of this: `npm i -g @nytka/cli`, then `nytka status` in any project.
 
 The file's own header says all of this. This section exists because the header is only read by
 someone who already opened the file.

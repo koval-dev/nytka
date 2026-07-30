@@ -27,8 +27,11 @@
 // have not drifted" is a string comparison rather than a promise.
 //
 // Two rules follow, and breaking either silently breaks the vendored copy:
-//   1. Import nothing but `node:` builtins. Not even @nytka/core — the copy has no
-//      node_modules to resolve from and must run under bare node in a repo with no install.
+//   1. Import nothing but `node:` builtins and vendored siblings by relative path. Not
+//      @nytka/core — the copy has no node_modules to resolve from and must run under bare node
+//      in a repo with no install. 0010 widened this from "node: only" when the parser became
+//      shared: a relative import resolves against the file rather than node_modules, so it
+//      costs nothing, but only while the sibling is itself vendored. A test checks that.
 //   2. Keep every export pure. `main()` is the only thing allowed to read argv, print, or
 //      exit, and it runs only when this file is executed directly.
 
@@ -59,99 +62,10 @@ export class LintUsageError extends Error {
 
 // ---------------------------------------------------------------- frontmatter
 
-function parseScalar (raw) {
-  let v = raw.trim()
-  if (!v) return ''
-  if ((v.startsWith('"') && v.endsWith('"')) || (v.startsWith("'") && v.endsWith("'"))) {
-    return v.slice(1, -1)
-  }
-  if (v === 'null' || v === '~') return null
-  if (v === 'true') return true
-  if (v === 'false') return false
-  return v
-}
-
-function parseInline (raw) {
-  const v = raw.trim()
-  if (v.startsWith('{') && v.endsWith('}')) {
-    const obj = {}
-    for (const part of splitTop(v.slice(1, -1))) {
-      const i = part.indexOf(':')
-      if (i === -1) continue
-      obj[part.slice(0, i).trim()] = parseScalar(part.slice(i + 1))
-    }
-    return obj
-  }
-  if (v.startsWith('[') && v.endsWith(']')) {
-    const inner = v.slice(1, -1).trim()
-    return inner ? splitTop(inner).map(x => parseInline(x)) : []
-  }
-  return parseScalar(v)
-}
-
-// Split on commas that are not nested inside {} [] or quotes.
-function splitTop (s) {
-  const out = []
-  let depth = 0, cur = '', quote = null
-  for (const ch of s) {
-    if (quote) { cur += ch; if (ch === quote) quote = null; continue }
-    if (ch === '"' || ch === "'") { quote = ch; cur += ch; continue }
-    if (ch === '{' || ch === '[') depth++
-    if (ch === '}' || ch === ']') depth--
-    if (ch === ',' && depth === 0) { out.push(cur); cur = ''; continue }
-    cur += ch
-  }
-  if (cur.trim()) out.push(cur)
-  return out.map(x => x.trim()).filter(Boolean)
-}
-
-/** Parse the nytka frontmatter subset. Returns null when there is no frontmatter block. */
-export function parseFrontmatter (text) {
-  if (!text.startsWith('---')) return null
-  const end = text.indexOf('\n---', 3)
-  if (end === -1) return null
-  const block = text.slice(text.indexOf('\n') + 1, end)
-  const data = {}
-  let currentKey = null
-  // A value may wrap onto following, indented lines — legal YAML. Parsing is deferred until
-  // the whole value has been read, so a wrapped entry means exactly what the one-line form it
-  // folds to means. Reading only the first line used to drop the rest silently, which made
-  // `verified: { …, by: human:mike }` lose its verifier purely by being wrapped.
-  let pending = null
-  const flush = () => {
-    if (pending) { pending.set(parseInline(pending.raw)); pending = null }
-  }
-
-  for (const line of block.split('\n')) {
-    if (!line.trim() || line.trim().startsWith('#')) continue
-
-    const listItem = line.match(/^\s*-\s+(.*)$/)
-    if (listItem && currentKey) {
-      flush()
-      if (!Array.isArray(data[currentKey])) data[currentKey] = []
-      const arr = data[currentKey]
-      const at = arr.length
-      arr.push(null)
-      pending = { raw: listItem[1], set: v => { arr[at] = v } }
-      continue
-    }
-
-    const kv = line.match(/^([A-Za-z_][\w-]*)\s*:\s*(.*)$/)
-    if (kv) {
-      flush()
-      const [, key, rest] = kv
-      currentKey = key
-      if (rest.trim() === '') data[key] = []
-      else pending = { raw: rest, set: v => { data[key] = v } }
-      continue
-    }
-
-    // Indented, and neither a key nor a list item: a continuation of the value being read.
-    if (pending && /^\s/.test(line)) pending.raw += ' ' + line.trim()
-  }
-  flush()
-  return data
-}
+// The parser lives in yaml.mjs and is shared with the task commands. It used to live here,
+// in a second subset that disagreed with the other one — see 0010.
+export { parseFrontmatter } from './nytka-yaml.mjs'
+import { parseFrontmatter } from './nytka-yaml.mjs'
 
 // ---------------------------------------------------------------- walk
 
