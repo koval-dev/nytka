@@ -12,6 +12,18 @@ here destroys that.
 **Tools live in `koval-dev/kd-nytka`** — the CLI, plugins and connectors published as
 `@nytka/*`.
 
+**This repo is public. That one is private.** The packages it builds are public on npm, so
+anyone can run them; its source is not readable, and neither is anything it records. Two rules
+follow, and they are the reason this section exists rather than just naming the repo:
+
+- **Never restate its internal state here.** Its decisions, task registry and working tree are
+  not verifiable by anyone reading this repo, so a claim about them cannot be checked and cannot
+  be corrected by a reader who spots it. Name the repo and the boundary; do not import its
+  contents. A pointer is not a leak — a transcription is.
+- **A public reader must never be sent somewhere they cannot go.** If a sentence would have
+  someone open that repo to understand this one, the sentence is wrong. Point at npm, or at the
+  vendored artefact here.
+
 If you are about to add a package, a dependency or a build step here, stop — it belongs in
 that repo. The full record lives there, as its decision 0006; do not restate it here.
 

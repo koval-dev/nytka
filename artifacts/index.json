@@ -7,7 +7,7 @@
       "kind": "logo",
       "summary": "Horizontal nytka logo with safe area. Vector, preferred for any placement that can take SVG.",
       "addedAt": "2026-07-29",
-      "source": "vendored:koval-dev/kd-nytka artifacts/nytka-logo-hor.svg",
+      "source": "vendored:koval-dev/kd-nytka (private) artifacts/nytka-logo-hor.svg",
       "status": "current"
     },
     {
@@ -16,25 +16,25 @@
       "kind": "logo",
       "summary": "Horizontal nytka logo with safe area, raster fallback. 1075x290 RGBA.",
       "addedAt": "2026-07-29",
-      "source": "vendored:koval-dev/kd-nytka artifacts/nytka-logo-hor.png",
+      "source": "vendored:koval-dev/kd-nytka (private) artifacts/nytka-logo-hor.png",
       "status": "current"
     },
     {
       "id": "logo-hor-nosafearea-svg",
       "file": "logo/nytka-logo-hor-nosafearea.svg",
       "kind": "logo",
-      "summary": "Horizontal nytka logo trimmed to the mark, no safe area. For placements that supply their own padding.",
+      "summary": "Horizontal nytka logo trimmed to the mark, no safe area. For placements that supply their own padding. The matching raster is not carried here — see artifacts/README.md.",
       "addedAt": "2026-07-29",
-      "source": "vendored:koval-dev/kd-nytka artifacts/nytka-logo-hor-nosafearea.svg",
+      "source": "vendored:koval-dev/kd-nytka (private) artifacts/nytka-logo-hor-nosafearea.svg",
       "status": "current"
     },
     {
       "id": "logomark-sqr-svg",
-      "file": "logo/nutka-logomark-sqr.svg",
+      "file": "logo/nytka-logomark-sqr.svg",
       "kind": "logo",
-      "summary": "Square logomark, no wordmark. For avatars and favicons. Filename is misspelled 'nutka' upstream; kept as-is because a vendored copy is replaced from the hub, never renamed in place.",
+      "summary": "Square logomark, no wordmark. For avatars and favicons. Renamed here on 2026-07-30 to correct a misspelling ('nutka'); the canonical original still carries the old name, so this copy is knowingly diverged until that is fixed upstream.",
       "addedAt": "2026-07-29",
-      "source": "vendored:koval-dev/kd-nytka artifacts/nutka-logomark-sqr.svg",
+      "source": "vendored:koval-dev/kd-nytka (private) artifacts/nutka-logomark-sqr.svg",
       "status": "current"
     }
   ]

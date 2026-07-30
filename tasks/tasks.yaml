@@ -170,27 +170,34 @@ tasks:
 
       unresolved.md names the trigger as "the second repo that needs the same asset, or the
       first time an agent has to answer 'is this file current?' about something with no
-      frontmatter". Both halves have now happened. kd-nytka holds the canonical brand assets
-      under its 0005; this repo carries five byte-identical vendored copies in artifacts/logo/,
-      and answering "are these current?" required diffing md5sums across two repos because
-      neither registry had an entry for them.
+      frontmatter". Both halves have now happened. This repo carries vendored brand assets in
+      artifacts/logo/ whose originals are canonical elsewhere, and answering "are these current?"
+      required comparing checksums by hand because no registry had an entry for them.
 
       What the exercise found, and what a decision has to account for:
 
       1. The registry is what makes a binary legible, and an empty registry is worse than none
-         — it reads as "nothing here" rather than "nobody filled this in". kd-nytka/artifacts/
-         has seven files and `"artifacts": []`, while its own README states every file must
-         have an entry. The shape is worked out; the instance is not.
+         — it reads as "nothing here" rather than "nobody filled this in". Creating one and
+         never filling it is the default outcome, so §3 has to make filling it cheaper than
+         skipping it.
       2. artifacts/ is holding two unlike things — durable inputs the project consumes (a
          logo) and outputs it produced. The working rule covers both and the §3 description
          ("outputs worth referencing") covers only one.
-      3. Vendored copies need a direction-of-truth field. kd-nytka's shape has `usedBy` on the
-         canonical side; the derived side has nowhere to say "this is a copy, replace it from
-         there, do not edit it here" except prose in a summary.
+      3. Vendored copies need a direction-of-truth field. The canonical side must be able to
+         name every repo holding a copy, or superseding an asset is guesswork; the derived side
+         has nowhere to say "this is a copy, replace it from there, do not edit it here" except
+         prose in a summary.
+      4. Provenance across a visibility boundary is unsolved, and this repo is the case. It is
+         public; the originals are not. `source` names something no reader here can open, so the
+         claim is honest and permanently uncheckable by its own audience. The trust tiers cannot
+         express that — `verified` says "someone checked", never "and you cannot".
+
+      Written without reference to the private repo's contents, per AGENTS.md.
     acceptanceCriteria:
       - "SPEC §3 or a new section says what artifacts/ holds, or the question is closed in unresolved.md with a reason"
-      - "the entry shape is stated somewhere normative, not only in two repos' READMEs"
+      - "the entry shape is stated somewhere normative, not only in a README"
       - "a vendored copy is distinguishable from a canonical original by field, not by prose"
+      - "the format can express a provenance claim whose source the reader cannot access"
     created: 2026-07-30
     updated: 2026-07-30
 
@@ -206,10 +213,13 @@ tasks:
 # repo boundary and is stated in both tasks' context rather than in `blockedBy`, which cannot
 # name a task in another file.
 #
-# Three findings from the 2026-07-30 reconcile belong to kd-nytka, not here, and are tracked
-# there as OPS-005 and OPS-006: the no-safe-area logo shipped as SVG content under a .png
-# extension, `nutka-logomark-sqr.svg` is misspelled, and that repo's artifacts/index.json is
-# empty beside seven files while its own README requires an entry for each. All three are about
-# the canonical originals, and under its 0005 a vendored copy is read-only — fixing them here
-# would fork the asset. The broken file was withdrawn from artifacts/ rather than repaired; it
-# returns when the hub exports a real PNG, which is what OPS-005 delivers.
+# Three brand-asset findings from the 2026-07-30 reconcile are tracked in the tools repo, not
+# here, because they are defects in the canonical originals and this repo only holds copies.
+# What they are is recorded there; restating a private repo's contents in a public one is
+# exactly what AGENTS.md now forbids, so this comment names the boundary and stops.
+#
+# Two consequences are visible here and belong here. The defective PNG was withdrawn from
+# artifacts/ rather than repaired, and returns when a real one is exported upstream. The
+# logomark was renamed here on 2026-07-30 to fix a misspelling, ahead of the original — so this
+# copy is knowingly diverged, which the vendoring rule normally forbids. It is the good kind of
+# divergence only until the original catches up; after that it is a fork nobody remembers making.

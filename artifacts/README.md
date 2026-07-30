@@ -20,17 +20,24 @@ canonical rather than large expiring evidence.
 
 ## Everything here is a vendored copy
 
-The brand assets are canonical in `koval-dev/kd-nytka`, under that repo's decision 0005. The
-copies here are **derived and read-only**: replace them from the hub, never edit them in place.
-Editing a vendored copy is what turns it into a fork — which is why the misspelled
-`nutka-logomark-sqr.svg` keeps its name here rather than being corrected locally. The fix
-belongs upstream, and arrives as a re-vendored file.
+The brand assets are canonical in `koval-dev/kd-nytka`, **which is private.** The copies here
+are derived: replace them from there, and expect no reader of this repo to be able to check the
+original. That is a real limitation of the provenance recorded below, not an oversight — see the
+open question in [unresolved.md](../unresolved.md).
 
-A defective asset is withdrawn, not repaired. `nytka-logo-hor-nosafearea.png` was SVG content
-under a `.png` extension; it is not carried here and has no entry, because an entry pointing at
-a file that is not present is worse than no entry. It returns when the hub exports a real PNG.
+Normally a vendored copy is also read-only, because editing one is how an asset quietly forks.
+Two departures from that, both deliberate and both recorded:
 
-Verified 2026-07-30: all four files are byte-identical to their hub originals.
+- **`nytka-logomark-sqr.svg` was renamed here on 2026-07-30** to correct a misspelling
+  (`nutka`). The original still carries the old name, so this copy is knowingly ahead of it. The
+  divergence is fine only until the original catches up; after that it is a fork nobody
+  remembers making.
+- **A defective asset is withdrawn, not repaired.** `nytka-logo-hor-nosafearea.png` was SVG
+  content under a `.png` extension. It is not carried here and has no entry — an entry pointing
+  at an absent file is worse than no entry. It returns when a real PNG is exported upstream.
+
+Verified 2026-07-30: the four files carried here are byte-identical to their originals; only the
+logomark's filename differs.
 
 ## Status values
 

@@ -26,8 +26,9 @@ and manage this project according to it.
 procedures, the lint script — is meant to be read and copied. Your agent is the runtime.
 
 **Or install the packages.** `@nytka/cli` gives you `nytka` as a command, and `@nytka/plugin-*`
-are connectors that collect real data into a project's `datasets/`. They live in a separate
-repo (`koval-dev/kd-nytka`) so that this one stays readable with nothing installed.
+are connectors that collect real data into a project's `datasets/`. **The packages are public on
+npm; their source repo is private.** They are built separately so this repo stays readable with
+nothing installed — you never need their source to use either lane.
 
 ```
 npx @nytka/cli lint .        # same checks as tools/nytka-lint.mjs, nothing to clone

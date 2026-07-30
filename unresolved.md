@@ -42,29 +42,35 @@ shape transfers; the storage rule inverts.
 **Working rule:** raw files go in `artifacts/` in the repo that uses them, with an
 `artifacts/index.json` alongside carrying `id`, `file`, `summary`, `addedAt`, `source` and
 `status` — the `datasets/index.json` shape, payloads committed rather than ignored. Purely
-additive, so §13 liberal conformance keeps existing packages valid. The rules and the entry
-shape are worked out in `kd-nytka/artifacts/`, decided there as 0005 — but as of 2026-07-30 that
-repo's `index.json` is `"artifacts": []` beside seven files, so what exists there is a specified
-shape, not a worked instance. `artifacts/index.json` in this repo is the first filled one.
+additive, so §13 liberal conformance keeps existing packages valid. `artifacts/index.json` in
+this repo is the worked instance; the entry shape it uses came from the private tools repo,
+where the rule was written first.
 
-**Decision trigger — fired 2026-07-30, both halves.** This repo took on five brand assets
-vendored from the hub (second repo needing the same asset), and answering *"are these current?"*
-required diffing md5sums across two working trees because neither registry had an entry
-(an agent asking that question of something with no frontmatter). Still open, because firing the
-trigger is what schedules the decision, not what makes it.
+**Decision trigger — fired 2026-07-30, both halves.** This repo took on brand assets vendored
+from elsewhere (second repo needing the same asset), and answering *"are these current?"*
+required comparing checksums by hand because no registry had an entry for them (an agent asking
+that question of something with no frontmatter). Still open, because firing the trigger is what
+schedules the decision, not what makes it.
 
 What the exercise established, for whoever writes that decision:
 
 - **An empty registry is worse than no registry.** It reads as "nothing here" rather than
-  "nobody filled this in", and nothing detects the difference.
+  "nobody filled this in", and nothing detects the difference. A registry that is created and
+  never filled is the likely default outcome, so whatever §3 gains has to make filling it the
+  cheaper option.
 - **`artifacts/` is holding two unlike things.** §3 calls it *"outputs worth referencing"*; a
   logo is a durable **input** the project consumes. The working rule covers both, the spec
   sentence covers one. Compounds with the external-mutation question below, which proposes
   `artifacts/` as the home for a third unlike thing.
-- **A vendored copy needs a direction-of-truth field.** The hub's shape carries `usedBy` on the
-  canonical side; the derived side has nowhere to say *"this is a copy — replace it from there,
-  never edit it here"* except prose in a `summary`. This repo currently encodes it as a
-  `vendored:` prefix inside `source`, which works and is not specified anywhere.
+- **A vendored copy needs a direction-of-truth field.** The canonical side needs to name every
+  repo holding a copy, so superseding an asset is not guesswork; the derived side has nowhere to
+  say *"this is a copy — replace it from there, never edit it here"* except prose in a `summary`.
+  This repo encodes it as a `vendored:` prefix inside `source`, which works and is specified
+  nowhere.
+- **Provenance across a visibility boundary is unsolved.** These copies are canonical in a
+  private repo, so `source` names something no reader of this repo can open. The claim is honest
+  and permanently uncheckable by its audience — which the trust tiers have no way to express. A
+  `verified` entry means "someone checked"; it cannot say "and you cannot."
 
 Settle it before a loader is built against whatever `artifacts/` turns out to mean.
 

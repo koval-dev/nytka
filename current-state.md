@@ -53,15 +53,25 @@ decided where lint's source lives. Both lanes run the same conformance code.
   `AGENTS.md` ends with a manual reconcile until lint can see the registry — which is blocked in
   kd-nytka on this repo writing lint's four rules down.
 
-- **2026-07-30** — **`artifacts/` is in real use here and now has a registry.** Five brand assets
-  live in `artifacts/logo/`, byte-identical vendored copies of the canonical originals in
-  kd-nytka (its 0005). `artifacts/index.json` and a README now carry their provenance, following
-  the working rule in `unresolved.md` rather than any normative section — there isn't one. Two
-  upstream defects were found and deliberately **not** fixed here, because a vendored copy is
-  read-only and repairing it in place is what forks an asset: `nytka-logo-hor-nosafearea.png` was
-  SVG content under a `.png` extension, and `nutka-logomark-sqr.svg` is misspelled. The broken
-  file was withdrawn rather than repaired — it returns when the hub exports a real PNG. The
-  misspelled one keeps its name. Both fixes are tracked in kd-nytka, which owns the originals.
+- **2026-07-30** — **the public/private boundary is now stated, and it is a format problem, not
+  just an editing rule.** This repo is public; the tools repo is private. Nothing said so, and
+  the consequences had already landed: `README.md` sent readers to a repo that 404s for them, and
+  a day of reconciliation work had transcribed that repo's internal state — task IDs, registry
+  contents, file counts — into public files, where no reader can verify or correct any of it.
+  `AGENTS.md` now carries the two rules that follow (name the boundary, never import the
+  contents; never send a public reader somewhere they cannot go), and the transcriptions are
+  removed. The format gap this exposed is in `unresolved.md`: provenance whose source the
+  audience cannot open is honest and permanently uncheckable, and the trust tiers have no way to
+  say so — `verified` means "someone checked", never "and you cannot".
+
+- **2026-07-30** — **`artifacts/` is in real use here and now has a registry.** Brand assets live
+  in `artifacts/logo/` as vendored copies of originals canonical elsewhere.
+  `artifacts/index.json` and a README carry their provenance, following the working rule in
+  `unresolved.md` rather than any normative section — there isn't one. Two upstream defects
+  surfaced. The defective PNG was **withdrawn** rather than repaired and returns when a real one
+  is exported upstream; the misspelled logomark was **renamed here**, ahead of its original,
+  which knowingly diverges this copy from it. Both fixes are tracked in the repo that owns the
+  originals.
 
 - **2026-07-29** — **`tools/nytka-lint.mjs` is no longer this repo's to edit.** Its writable
   source moved to `@nytka/cli` in the development repo; the file here is a generated read-only
