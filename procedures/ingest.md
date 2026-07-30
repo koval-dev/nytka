@@ -38,9 +38,16 @@ is `adopt-existing.md`; every one after is this.
 | A reusable finding | `research/` |
 | Collected data | `datasets/index.json` — metadata only, payload stays out |
 | Status, blockers, what is next | `current-state.md` |
+| Work that must happen, or that just stopped being needed | the task registry in `project.yaml → tasks` |
 | A question with no answer yet | `unresolved.md` |
 | A completed output | `artifacts/` |
 | A milestone or failed approach | `history/timeline.md` |
+
+The task row is easy to skip because the row above it looks like it covers the same ground. It
+does not: `current-state.md` is the narrative of what is happening, and the registry is the list
+of what must happen. An ingest that updates only the narrative leaves the backlog asserting
+things that stopped being true — and no other operation will catch it, because `nytka-lint`
+does not read the registry.
 
 ### 2. Discard aggressively
 

@@ -7,12 +7,14 @@ generated: { by: claude-opus-5, at: 2026-07-29 }
 verified:
   - { by: claude-opus-5, at: 2026-07-29, against: npm-registry }
   - { by: claude-opus-5, at: 2026-07-29, against: kd-nytka-working-tree }
+  - { by: claude-opus-5, at: 2026-07-30, against: github-api }
+  - { by: claude-opus-5, at: 2026-07-30, against: kd-nytka-working-tree }
 confidence: inferred
 ---
 
 # Current state
 
-**Last updated:** 2026-07-29
+**Last updated:** 2026-07-30
 
 ## Current focus
 
@@ -28,12 +30,37 @@ decided where lint's source lives. Both lanes run the same conformance code.
 ## Active work
 
 - **SPEC-002** — name the task lifecycle in SPEC §8, per draft decision
-  [0006](decisions/0006-task-lifecycle.md). In progress since 2026-07-28; blocked on two open
-  points before the SPEC edit (see the task and the decision).
+  [0006](decisions/0006-task-lifecycle.md). Marked in progress since 2026-07-28, but nothing has
+  moved on it or on 0006 since that date: it is **waiting on the owner** for two answers —
+  whether `todo` is dropped for `ready`, and whether `acceptedBy` earns a field or reuses
+  `verified`. The vocabulary in use has no status meaning "waiting on a human", which is part of
+  what 0006 exists to fix.
 - **TOOL-002** — write down the rules for adding a lint check. Now the larger half of what this
-  repo owes lint: the implementation moved out under 0009, the rules did not.
+  repo owes lint: the implementation moved out under 0009, the rules did not. Rule 4 also
+  unblocks the tasks.yaml checks in kd-nytka, which is the path to lint ever seeing the backlog.
+- **SPEC-003** — `proposed`, not accepted: settle what `artifacts/` is now that its trigger has
+  fired. Agent-proposed on 2026-07-30 and awaiting a human, per 0006's rule that nothing leaves
+  `proposed` without one.
 
 ## Recent meaningful changes
+
+- **2026-07-30** — **the backlog was reconciled, and the gap that let it rot was closed.** The
+  task for publishing this repo still read *"the repo exists but is private"* a day after the
+  repo went public — through a clean lint and an accurate `current-state.md`. Cause: `nytka-lint`
+  does not read `tasks/tasks.yaml`, the registry is YAML so no task can carry `verified` or
+  `stale_after`, and `procedures/ingest.md` had **no row routing anything to tasks**. Three of
+  the format's four honesty mechanisms skipped the backlog entirely. Ingest now has the row, and
+  `AGENTS.md` ends with a manual reconcile until lint can see the registry — which is blocked in
+  kd-nytka on this repo writing lint's four rules down.
+
+- **2026-07-30** — **`artifacts/` is in real use here and now has a registry.** Five brand assets
+  live in `artifacts/logo/`, byte-identical vendored copies of the canonical originals in
+  kd-nytka (its 0005). `artifacts/index.json` and a README now carry their provenance, following
+  the working rule in `unresolved.md` rather than any normative section — there isn't one. Two
+  upstream defects were found and deliberately **not** fixed here, because a vendored copy is
+  read-only and repairing it in place is what forks an asset: `nytka-logo-hor-nosafearea.png` is
+  SVG content under a `.png` extension, and `nutka-logomark-sqr.svg` is misspelled. Both are
+  recorded in the registry so no one uses them blind.
 
 - **2026-07-29** — **`tools/nytka-lint.mjs` is no longer this repo's to edit.** Its writable
   source moved to `@nytka/cli` in the development repo; the file here is a generated read-only
@@ -112,13 +139,16 @@ None.
   are merely shaped by that one case is currently indistinguishable. Six published connectors
   now write real payloads into `datasets/`, which is the first sustained outside exercise of
   that part of the format and produced the three new open questions above — but a connector is
-  tooling, not an adopting project. `artifacts/` and agent-reported numbers are still untested,
-  and the wait continues.
+  tooling, not an adopting project. Agent-reported numbers are still untested, and the wait
+  continues. `artifacts/` is no longer on that list — see below.
 
 ## Verified snapshots
 
 | Claim | Value | Verified | Against |
 |---|---|---|---|
+| Repo is public and the raw SPEC.md URL resolves | yes | 2026-07-30 | `gh repo view` + `curl` → 200 |
+| Brand assets here match the hub byte for byte | yes, all 5 | 2026-07-30 | md5 across both working trees |
+| Lint reads `tasks/tasks.yaml` | **no** | 2026-07-30 | source — 0 occurrences of "tasks" |
 | Adopters in production | 1 project + 1 tooling line (8 published packages) | 2026-07-29 | npm registry |
 | Lint runs clean on itself | yes | 2026-07-29 | `node tools/nytka-lint.mjs .` |
 | Lint dependencies | 0 | 2026-07-27 | source |

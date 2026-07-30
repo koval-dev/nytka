@@ -130,3 +130,13 @@ node tools/nytka-lint.mjs .
 ```
 
 Zero errors. Nytka failing its own lint is the least defensible bug available.
+
+**Then reconcile `tasks/tasks.yaml` against what actually changed.** Any task whose context is
+now false, or whose acceptance criteria are met, is updated in the same commit as the work.
+
+This step is manual because it has to be: lint reads markdown frontmatter and does not open the
+registry, so a green lint run says nothing about whether the backlog is true. The failure is not
+hypothetical — the task for publishing this repo sat at `todo`, asserting "the repo exists but is
+private", for a day after the repo went public, through a clean lint and an accurate
+`current-state.md`. Both entry points were right and the backlog was wrong, which is the exact
+shape of rot the format exists to make visible.

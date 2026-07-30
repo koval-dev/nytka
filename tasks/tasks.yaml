@@ -1,24 +1,35 @@
 version: 1
-updated: "2026-07-29"
+updated: "2026-07-30"
 
 # Nytka's own backlog. Schema: SPEC.md §8.
 
 tasks:
   - id: DOC-001
     title: "Publish nytka publicly so SPEC.md is linkable by URL"
-    status: todo
+    status: done
     priority: high
     owner: mike
     blockedBy: []
     context: |
       The entire product proposition is "paste one link into any agent". That does not work
-      until SPEC.md has a public raw URL. The repo exists but is private; README already
-      documents the intended link as raw.githubusercontent.com/koval-dev/nytka/main/SPEC.md.
+      until SPEC.md has a public raw URL. The repo went public on 2026-07-29 and the link
+      README documents — raw.githubusercontent.com/koval-dev/nytka/main/SPEC.md — resolves.
+
+      Closed 2026-07-30, a day late: the repo was published on the 29th and this task still
+      read "the repo exists but is private" until someone checked. Nothing in the format
+      noticed, because nytka-lint does not read this file and ingest has no row that routes
+      work here. Both gaps are now addressed — see procedures/ingest.md and AGENTS.md.
     acceptanceCriteria:
       - "the raw SPEC.md URL printed in README.md resolves"
       - "no client, company or project data is present anywhere in the repo"
+    evidence:
+      - "gh repo view koval-dev/nytka: visibility PUBLIC, isPrivate false (2026-07-30)"
+      - "curl raw.githubusercontent.com/koval-dev/nytka/main/SPEC.md: HTTP 200 (2026-07-30)"
+      - "second criterion: mechanical scan only (2026-07-30) — no email addresses, and the
+         only external domains referenced anywhere are github.com and raw.githubusercontent.com.
+         A scan cannot recognise a client name it has never seen; the owner has not confirmed."
     created: 2026-07-27
-    updated: 2026-07-27
+    updated: 2026-07-30
 
   - id: SPEC-002
     title: "Name the task lifecycle in SPEC §8"
@@ -133,14 +144,55 @@ tasks:
       Separately, AGENTS.md called lint "the conformance rules expressed as code". §13 names
       three conformance requirements; lint errors on six checks, of which `stale`,
       `decision-graph` and `dataset` are not conformance failures at all. The code draws the
-      boundary correctly and that sentence did not. **Done 2026-07-29** — the sentence was
-      removed when AGENTS.md was rewritten for 0009. The four rules are what is left.
+      boundary correctly and that sentence did not.
     acceptanceCriteria:
       - "the four rules are recorded where 0003 is, or in AGENTS.md, and are reachable from procedures/lint.md"
-      - "DONE 2026-07-29 — AGENTS.md no longer describes lint as the conformance rules expressed as code"
+      - "AGENTS.md no longer describes lint as the conformance rules expressed as code"
       - "node tools/nytka-lint.mjs . passes with zero errors"
+    workLog:
+      - at: 2026-07-29
+        note: |
+          Second criterion met — the sentence was removed when AGENTS.md was rewritten for
+          0009. The four rules are what is left.
     created: 2026-07-29
-    updated: 2026-07-29
+    updated: 2026-07-30
+
+  - id: SPEC-003
+    title: "Settle what artifacts/ is, now that its decision trigger has fired"
+    status: proposed
+    proposedBy: agent:claude-opus-5
+    priority: medium
+    owner: mike
+    blockedBy: []
+    context: |
+      Proposed by an agent on 2026-07-30 while reconciling this registry. Not committed work
+      until a human accepts it — see decision 0006.
+
+      unresolved.md names the trigger as "the second repo that needs the same asset, or the
+      first time an agent has to answer 'is this file current?' about something with no
+      frontmatter". Both halves have now happened. kd-nytka holds the canonical brand assets
+      under its 0005; this repo carries five byte-identical vendored copies in artifacts/logo/,
+      and answering "are these current?" required diffing md5sums across two repos because
+      neither registry had an entry for them.
+
+      What the exercise found, and what a decision has to account for:
+
+      1. The registry is what makes a binary legible, and an empty registry is worse than none
+         — it reads as "nothing here" rather than "nobody filled this in". kd-nytka/artifacts/
+         has seven files and `"artifacts": []`, while its own README states every file must
+         have an entry. The shape is worked out; the instance is not.
+      2. artifacts/ is holding two unlike things — durable inputs the project consumes (a
+         logo) and outputs it produced. The working rule covers both and the §3 description
+         ("outputs worth referencing") covers only one.
+      3. Vendored copies need a direction-of-truth field. kd-nytka's shape has `usedBy` on the
+         canonical side; the derived side has nowhere to say "this is a copy, replace it from
+         there, do not edit it here" except prose in a summary.
+    acceptanceCriteria:
+      - "SPEC §3 or a new section says what artifacts/ holds, or the question is closed in unresolved.md with a reason"
+      - "the entry shape is stated somewhere normative, not only in two repos' READMEs"
+      - "a vendored copy is distinguishable from a canonical original by field, not by prose"
+    created: 2026-07-30
+    updated: 2026-07-30
 
 # TOOL-003 and TOOL-004 were created here on 2026-07-29 and moved to kd-nytka the same day, as
 # RT-006 and RT-007. Both are implementation work on lint, and under kd-nytka's decision 0009
@@ -153,3 +205,9 @@ tasks:
 # RT-007 still needs TOOL-002's rule 4 before it can be written. That dependency crosses the
 # repo boundary and is stated in both tasks' context rather than in `blockedBy`, which cannot
 # name a task in another file.
+#
+# Two defects in the brand assets were found on 2026-07-30 and belong to kd-nytka, not here:
+# `nytka-logo-hor-nosafearea.png` is SVG content under a .png extension (byte-identical to the
+# .svg beside it), and `nutka-logomark-sqr.svg` is misspelled. Both originate in the hub, and
+# under its 0005 a vendored copy is read-only — fixing them here would fork the asset. Recorded
+# in artifacts/index.json so the copies are not used blind; the fix is the hub's.
