@@ -17,7 +17,7 @@
 // [a, b] and {a: b}, and "|" / ">" block scalars. Same deliberate limitation as
 // nytka-lint.mjs — a full YAML parser would be a dependency.
 
-import { readFileSync, writeFileSync, existsSync, readdirSync, statSync, mkdirSync, copyFileSync } from 'node:fs'
+import { readFileSync, writeFileSync, existsSync, readdirSync, statSync, mkdirSync, copyFileSync, realpathSync } from 'node:fs'
 import { join, resolve, dirname, relative, basename } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { spawnSync } from 'node:child_process'
@@ -640,7 +640,14 @@ function cmdLint (dir) {
 
 // ------------------------------------------------------------------ dispatch
 
-const isMain = process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)
+// realpathSync, not resolve: import.meta.url is always the real path, while argv[1] is whatever
+// was typed. Comparing them unresolved makes the guard false whenever the tool is reached
+// through a symlink — /tmp and a global npm bin are both symlinks — and the command then does
+// nothing at all, silently, exit 0.
+const entry = (() => {
+  try { return process.argv[1] ? realpathSync(process.argv[1]) : null } catch { return null }
+})()
+const isMain = entry === fileURLToPath(import.meta.url)
 
 if (isMain) {
   const [cmd, a, b, c] = positional

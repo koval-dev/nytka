@@ -223,3 +223,47 @@ tasks:
 # logomark was renamed here on 2026-07-30 to fix a misspelling, ahead of the original — so this
 # copy is knowingly diverged, which the vendoring rule normally forbids. It is the good kind of
 # divergence only until the original catches up; after that it is a fork nobody remembers making.
+
+  - id: TOOL-005
+    title: "Read a wrapped YAML value instead of abandoning the file at it"
+    status: done
+    priority: high
+    owner: mike
+    blockedBy: []
+    context: |
+      `nytka status` reported one task against a file holding seven, and said so with exit 0.
+
+      DOC-001 gained a wrapped quoted string in `evidence` on 2026-07-30. parseYaml consumed
+      one line per scalar, so the continuation line matched nothing and every enclosing
+      structure broke on it — six tasks and DOC-001's own `created` and `updated` were dropped.
+      `next` said nothing was ready; `task show SPEC-002` said there was no such task; lint
+      said clean, because lint does not read this file. Every count printed was wrong and
+      believable, which is worse than a visible parse error.
+
+      The file was never at fault. A wrapped double-quoted scalar is legal YAML and a
+      spec-compliant parser folds it correctly, so putting the string back on one line would
+      have left a tool that silently truncates the next one.
+
+      The defect was not really about wrapped values, it was about failing quietly, and it was
+      not confined to tasks: the same break in markdown frontmatter took `status` and
+      `stale_after` with it, so staleness detection would have gone silent on the document
+      that needed it.
+
+      Reported by an external reviewer, who reproduced the count and named the cause correctly.
+      The regression entered in f32f407 — the commit that fixed DOC-001's staleness — so the
+      reconcile that closed one gap opened another, in a file nothing checks.
+    acceptanceCriteria:
+      - "a wrapped quoted, plain or bracketed value folds instead of ending the document"
+      - "content the parser cannot read raises with a file and line, rather than returning what parsed so far"
+      - "the whole task count is asserted after parsing, not just the shape of one task"
+      - "fixtures cover evidence, workLog, block scalars and wrapped values"
+      - "`task list --status todo` filters, in both the space and equals forms"
+    evidence:
+      - "tools/nytka.mjs: values fold continuation lines; unparsed content and trailing lines raise"
+      - "7 of 7 tasks here and 40 of 40 in the tools repo, which was silently losing four (2026-07-30)"
+      - "ids, statuses and titles match a spec-compliant parser on both registries"
+      - "all 39 frontmatter and yaml blocks across both repos parse — no false positives from the new errors"
+      - "tools/nytka.test.mjs: 22 tests, including the whole-file count and the symlink main-guard"
+      - "the main-guard bug kd-nytka RT-002 records was present here too — through a symlink the CLI printed nothing, exit 0; now realpathSync"
+    created: 2026-07-30
+    updated: 2026-07-30

@@ -10,7 +10,8 @@
 
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
-import { readFileSync } from 'node:fs'
+import { readFileSync, mkdtempSync, symlinkSync, rmSync } from 'node:fs'
+import { tmpdir } from 'node:os'
 import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { spawnSync } from 'node:child_process'
@@ -246,6 +247,19 @@ test('--today is still read in both forms, and --help still prints help', () => 
   assert.match(run('status', '--today', '2026-09-01').out, /33 days ago/)
   assert.match(run('status', '--today=2026-09-01').out, /33 days ago/)
   assert.match(run('--help').out, /working commands for a nytka project package/)
+})
+
+test('the CLI still runs when it is reached through a symlink', () => {
+  // kd-nytka RT-002 records this one: import.meta.url is always the real path and argv[1] is
+  // whatever was typed, so comparing them unresolved makes the main-guard false and the command
+  // print nothing at all, exit 0. A global npm bin is a symlink, so this is the normal install.
+  const dir = mkdtempSync(join(tmpdir(), 'nytka-link-'))
+  const link = join(dir, 'linked.mjs')
+  try {
+    symlinkSync(join(HERE, 'nytka.mjs'), link)
+    const r = spawnSync(process.execPath, [link, 'next'], { cwd: ROOT, encoding: 'utf8' })
+    assert.match(r.stdout, /ADOPT-001/, 'running through a symlink must not silently do nothing')
+  } finally { rmSync(dir, { recursive: true, force: true }) }
 })
 
 test('a parse failure exits non-zero instead of printing a partial backlog', () => {
