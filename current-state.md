@@ -58,9 +58,10 @@ decided where lint's source lives. Both lanes run the same conformance code.
   kd-nytka (its 0005). `artifacts/index.json` and a README now carry their provenance, following
   the working rule in `unresolved.md` rather than any normative section — there isn't one. Two
   upstream defects were found and deliberately **not** fixed here, because a vendored copy is
-  read-only and repairing it in place is what forks an asset: `nytka-logo-hor-nosafearea.png` is
-  SVG content under a `.png` extension, and `nutka-logomark-sqr.svg` is misspelled. Both are
-  recorded in the registry so no one uses them blind.
+  read-only and repairing it in place is what forks an asset: `nytka-logo-hor-nosafearea.png` was
+  SVG content under a `.png` extension, and `nutka-logomark-sqr.svg` is misspelled. The broken
+  file was withdrawn rather than repaired — it returns when the hub exports a real PNG. The
+  misspelled one keeps its name. Both fixes are tracked in kd-nytka, which owns the originals.
 
 - **2026-07-29** — **`tools/nytka-lint.mjs` is no longer this repo's to edit.** Its writable
   source moved to `@nytka/cli` in the development repo; the file here is a generated read-only

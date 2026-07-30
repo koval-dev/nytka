@@ -23,10 +23,14 @@ canonical rather than large expiring evidence.
 The brand assets are canonical in `koval-dev/kd-nytka`, under that repo's decision 0005. The
 copies here are **derived and read-only**: replace them from the hub, never edit them in place.
 Editing a vendored copy is what turns it into a fork — which is why the misspelled
-`nutka-logomark-sqr.svg` keeps its name here, and why the broken
-`nytka-logo-hor-nosafearea.png` is marked `draft` rather than repaired locally.
+`nutka-logomark-sqr.svg` keeps its name here rather than being corrected locally. The fix
+belongs upstream, and arrives as a re-vendored file.
 
-Verified 2026-07-30: all five files are byte-identical to their hub originals.
+A defective asset is withdrawn, not repaired. `nytka-logo-hor-nosafearea.png` was SVG content
+under a `.png` extension; it is not carried here and has no entry, because an entry pointing at
+a file that is not present is worse than no entry. It returns when the hub exports a real PNG.
+
+Verified 2026-07-30: all four files are byte-identical to their hub originals.
 
 ## Status values
 

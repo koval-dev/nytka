@@ -29,15 +29,6 @@
       "status": "current"
     },
     {
-      "id": "logo-hor-nosafearea-png",
-      "file": "logo/nytka-logo-hor-nosafearea.png",
-      "kind": "logo",
-      "summary": "DEFECTIVE — do not use. The file is SVG content under a .png extension, byte-identical to logo/nytka-logo-hor-nosafearea.svg. Anything consuming it as a raster image gets a broken asset. The defect originates in the hub, where the fix belongs; this copy is read-only.",
-      "addedAt": "2026-07-29",
-      "source": "vendored:koval-dev/kd-nytka artifacts/nytka-logo-hor-nosafearea.png",
-      "status": "draft"
-    },
-    {
       "id": "logomark-sqr-svg",
       "file": "logo/nutka-logomark-sqr.svg",
       "kind": "logo",
