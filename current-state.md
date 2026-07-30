@@ -158,12 +158,12 @@ None.
 | Claim | Value | Verified | Against |
 |---|---|---|---|
 | Repo is public and the raw SPEC.md URL resolves | yes | 2026-07-30 | `gh repo view` + `curl` → 200 |
-| Brand assets here match the hub byte for byte | yes, all 5 | 2026-07-30 | md5 across both working trees |
+| Brand assets here match the hub byte for byte | yes, all 4 registered — the logomark under a corrected filename | 2026-07-30 | md5 across both working trees |
 | Lint reads `tasks/tasks.yaml` | **no** | 2026-07-30 | source — 0 occurrences of "tasks" |
 | Adopters in production | 1 project + 1 tooling line (8 published packages) | 2026-07-29 | npm registry |
 | Lint runs clean on itself | yes | 2026-07-29 | `node tools/nytka-lint.mjs .` |
 | Lint dependencies | 0 | 2026-07-27 | source |
-| `tools/nytka-lint.mjs` is a generated copy | yes | 2026-07-29 | file header + `@nytka/cli` 0.2.0 |
+| `tools/nytka-lint.mjs` is a generated copy | yes — regenerated 2026-07-30, so it is **ahead of published 0.2.0** until the next release | 2026-07-30 | file header + `npm run vendor` |
 | `npx @nytka/cli lint` runs the same checks | yes | 2026-07-29 | run against this repo from the registry |
 | Published connectors | 6 (`gsc` 0.3.3, `ga4` 0.2.3, `sanity` 0.3.2, `gtm` 0.1.2, `dataforseo` 0.1.3, `ads` 0.1.1) | 2026-07-29 | npm registry |
 | Published runtime | `@nytka/cli` 0.2.0, `@nytka/core` 0.1.0 | 2026-07-29 | npm registry |

@@ -113,20 +113,43 @@ export function parseFrontmatter (text) {
   const block = text.slice(text.indexOf('\n') + 1, end)
   const data = {}
   let currentKey = null
+  // A value may wrap onto following, indented lines — legal YAML. Parsing is deferred until
+  // the whole value has been read, so a wrapped entry means exactly what the one-line form it
+  // folds to means. Reading only the first line used to drop the rest silently, which made
+  // `verified: { …, by: human:mike }` lose its verifier purely by being wrapped.
+  let pending = null
+  const flush = () => {
+    if (pending) { pending.set(parseInline(pending.raw)); pending = null }
+  }
+
   for (const line of block.split('\n')) {
     if (!line.trim() || line.trim().startsWith('#')) continue
+
     const listItem = line.match(/^\s*-\s+(.*)$/)
     if (listItem && currentKey) {
+      flush()
       if (!Array.isArray(data[currentKey])) data[currentKey] = []
-      data[currentKey].push(parseInline(listItem[1]))
+      const arr = data[currentKey]
+      const at = arr.length
+      arr.push(null)
+      pending = { raw: listItem[1], set: v => { arr[at] = v } }
       continue
     }
+
     const kv = line.match(/^([A-Za-z_][\w-]*)\s*:\s*(.*)$/)
-    if (!kv) continue
-    const [, key, rest] = kv
-    currentKey = key
-    data[key] = rest.trim() === '' ? [] : parseInline(rest)
+    if (kv) {
+      flush()
+      const [, key, rest] = kv
+      currentKey = key
+      if (rest.trim() === '') data[key] = []
+      else pending = { raw: rest, set: v => { data[key] = v } }
+      continue
+    }
+
+    // Indented, and neither a key nor a list item: a continuation of the value being read.
+    if (pending && /^\s/.test(line)) pending.raw += ' ' + line.trim()
   }
+  flush()
   return data
 }
 
