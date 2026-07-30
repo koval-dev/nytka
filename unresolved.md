@@ -42,12 +42,31 @@ shape transfers; the storage rule inverts.
 **Working rule:** raw files go in `artifacts/` in the repo that uses them, with an
 `artifacts/index.json` alongside carrying `id`, `file`, `summary`, `addedAt`, `source` and
 `status` — the `datasets/index.json` shape, payloads committed rather than ignored. Purely
-additive, so §13 liberal conformance keeps existing packages valid. A worked instance is in
-`kd-nytka/artifacts/`, decided there as 0005.
+additive, so §13 liberal conformance keeps existing packages valid. The rules and the entry
+shape are worked out in `kd-nytka/artifacts/`, decided there as 0005 — but as of 2026-07-30 that
+repo's `index.json` is `"artifacts": []` beside seven files, so what exists there is a specified
+shape, not a worked instance. `artifacts/index.json` in this repo is the first filled one.
 
-**Decision trigger:** the second repo that needs the same asset, or the first time an agent has
-to answer *"is this file current?"* about something with no frontmatter. Settle it before a
-loader is built against whatever `artifacts/` turns out to mean.
+**Decision trigger — fired 2026-07-30, both halves.** This repo took on five brand assets
+vendored from the hub (second repo needing the same asset), and answering *"are these current?"*
+required diffing md5sums across two working trees because neither registry had an entry
+(an agent asking that question of something with no frontmatter). Still open, because firing the
+trigger is what schedules the decision, not what makes it.
+
+What the exercise established, for whoever writes that decision:
+
+- **An empty registry is worse than no registry.** It reads as "nothing here" rather than
+  "nobody filled this in", and nothing detects the difference.
+- **`artifacts/` is holding two unlike things.** §3 calls it *"outputs worth referencing"*; a
+  logo is a durable **input** the project consumes. The working rule covers both, the spec
+  sentence covers one. Compounds with the external-mutation question below, which proposes
+  `artifacts/` as the home for a third unlike thing.
+- **A vendored copy needs a direction-of-truth field.** The hub's shape carries `usedBy` on the
+  canonical side; the derived side has nowhere to say *"this is a copy — replace it from there,
+  never edit it here"* except prose in a `summary`. This repo currently encodes it as a
+  `vendored:` prefix inside `source`, which works and is not specified anywhere.
+
+Settle it before a loader is built against whatever `artifacts/` turns out to mean.
 
 The trigger previously named FMT-003 — the hand-run gate — as where this friction would
 surface. That gate was removed and FMT-003 closed on 2026-07-28; friction now surfaces in the

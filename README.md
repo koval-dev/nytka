@@ -132,8 +132,9 @@ published connectors that write into a project's `datasets/`. The format will ch
 markdown frontmatter, so migration is a rename.
 
 A connector is tooling, not an adopting project, so the parts only a second adopter would
-stress — `artifacts/`, agent-reported numbers — are still untested. See
-[unresolved.md](unresolved.md).
+stress are still untested — agent-reported numbers chief among them. `artifacts/` came off that
+list on 2026-07-30: it is now carrying real assets in two repos, which fired the decision trigger
+on what it is actually for. It is exercised, not settled. See [unresolved.md](unresolved.md).
 
 Nytka manages itself under its own rules — `project.yaml`, `decisions/` and `current-state.md`
 in this repo are the dogfood, and the first bug reports.
