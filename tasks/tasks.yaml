@@ -260,10 +260,11 @@ tasks:
       - "`task list --status todo` filters, in both the space and equals forms"
     evidence:
       - "tools/nytka.mjs: values fold continuation lines; unparsed content and trailing lines raise"
-      - "7 of 7 tasks here and 40 of 40 in the tools repo, which was silently losing four (2026-07-30)"
+      - "every task in this file is returned — 7 of 7 (2026-07-30). The same bug was dropping tasks
+         from the tools repo's registry too; the count there is not this repo's to publish"
       - "ids, statuses and titles match a spec-compliant parser on both registries"
       - "all 39 frontmatter and yaml blocks across both repos parse — no false positives from the new errors"
       - "tools/nytka.test.mjs: 22 tests, including the whole-file count and the symlink main-guard"
-      - "the main-guard bug kd-nytka RT-002 records was present here too — through a symlink the CLI printed nothing, exit 0; now realpathSync"
+      - "the main-guard was wrong the same way the tools repo had already recorded for its own bins — through a symlink the CLI printed nothing, exit 0; now realpathSync"
     created: 2026-07-30
     updated: 2026-07-30

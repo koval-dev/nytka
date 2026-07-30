@@ -58,10 +58,11 @@ installs nothing must still be able to lint and to work a backlog. That property
 vendoring possible at all, not politeness inherited from
 [0003](decisions/0003-lint-zero-dependencies.md).
 
-**They import each other by relative path, so keep them together.** That is 0010 in `kd-nytka`,
-which traded 0009's one-file rule for a shared parser — the two tools each had their own until
-2026-07-30, and the two disagreed. A relative import needs no `node_modules`, so the zero-install
-promise is unchanged; copying one file out of the four is what breaks now.
+**They import each other by relative path, so keep them together.** Recorded as that repo's
+decision 0010, which traded a one-file rule for a single shared parser — until 2026-07-30 lint
+and the task commands each had their own, and the two disagreed. A relative import needs no
+`node_modules`, so the zero-install promise is unchanged; copying one file out of the four is
+what breaks now.
 
 Or install it and skip all of this: `npm i -g @nytka/cli`, then `nytka status` in any project.
 
