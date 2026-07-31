@@ -1,10 +1,11 @@
 ---
 type: Decision
 title: Five rules govern adding a lint check
-status: draft
+status: stable
 generated: { by: claude-opus-5, at: 2026-07-31 }
 verified:
   - { by: claude-opus-5, at: 2026-07-31, against: lint-source }
+  - { by: "human:mike", at: 2026-07-31 }
 confidence: inferred
 supersedes: null
 superseded_by: null
@@ -217,9 +218,16 @@ otherwise.** They were stated once in a session, applied by the people who state
 read by anyone else. Recording them does not make them more agreed than they were — it makes them
 checkable, which is the prerequisite for disagreeing with them.
 
-`draft`, awaiting the owner. The parts most likely to be wrong are the ones written here for the
-first time: rule 3's four clauses, rule 5, and the conformance arm of rule 1. The last of those is a
-correction to how the rule was stated rather than to how the code behaves, and the code was right.
+**Confirmed by the owner on 2026-07-31**, closing TOOL-002. The parts written here for the first
+time are rule 3's four clauses, rule 5, and the conformance arm of rule 1; the last is a correction
+to how the rule was stated rather than to how the code behaves, and the code was right.
+
+Rule 3's strictness was put to the owner as the thing most likely to be wrong, with the looser
+alternative named — one correct finding plus no outstanding false positive, dropping the
+independent-origin clause. That is the bar which let a check ship at `error` and be demoted the
+same day, and the strict version was accepted as a standing rule rather than a one-off. The
+expected cost is checks sitting at `warn` longer than feels comfortable; if that turns out to be
+the wrong trade, it is a supersede, not an edit.
 
 **On immutability.** P5 and §6 make a decision immutable once `stable`, and the natural objection
 is that a promotion bar will keep moving. It should not, and the record is shaped so that it does

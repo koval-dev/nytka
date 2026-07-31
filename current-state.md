@@ -32,27 +32,66 @@ decided where lint's source lives. Both lanes run the same conformance code.
 
 ## Active work
 
-- **SPEC-002** — name the task lifecycle in SPEC §8. **All six criteria are met and it is in
-  `review`** as of 2026-07-31. The two that were open both closed in the tools repo: the
-  downstream `AGENTS.md` now defers to §8 instead of restating a vocabulary, and both registries
-  in the line use only §8's statuses — re-checked here rather than taken on report. It is
-  `review` and not `done` because the checking happened in the same session that finished the
-  work, which is exactly what [0006](decisions/0006-task-lifecycle.md) added the state to
-  prevent. A human closes it.
-- **TOOL-002** — write down the rules for adding a lint check. **All three criteria met and it is
-  in `review`** as of 2026-07-31. The rules are [0008](decisions/0008-lint-check-rules.md)
-  (`draft`), reachable from `procedures/lint.md`. Rule 4 was the half the registry checks were
-  waiting on; lint has read `tasks.yaml` since 2026-07-31, written by reading rule 4 out of this
-  task's `context` field — which is the reachability defect rather than an exception to it.
-  `review` and not `done` for the same reason as SPEC-002: a human closes it.
+- **PROC-001** — the procedure for when an agent may spend a human's attention,
+  [ask-the-owner](procedures/ask-the-owner.md). Written 2026-07-31 and in `review`. It is the
+  first procedure here about the format's *users* rather than its files, and it exists because
+  the owner said the output had stopped being for humans.
+- **ADOPT-001** — still the thing that matters most, and still `in_progress`. A second adopter
+  with a different shape is what would tell us which parts of v0.1 generalise. It now also gates
+  **TOOL-006**, because promoting the placeholder check would turn two live adoptions red on
+  findings nobody has answered.
 - **SPEC-003** — `proposed`, not accepted: settle what `artifacts/` is now that its trigger has
   fired. Agent-proposed on 2026-07-30 and awaiting a human, per §8's rule that nothing leaves
   `proposed` without one.
+- **TOOL-001** — `ready`, low: a worked project-specific lint check in the docs.
+
+**Closed 2026-07-31 by the owner**, both after a review that was the owner's rather than the
+author's: **SPEC-002** (the task lifecycle in §8) and **TOOL-002** (the rules for adding a lint
+check). [0006](decisions/0006-task-lifecycle.md),
+[0007](decisions/0007-execution-fields-stay-out-of-the-task-record.md) and
+[0008](decisions/0008-lint-check-rules.md) are all `stable`.
 
 ## Recent meaningful changes
 
+- **2026-07-31** — **the format gained a procedure for interrupting a human**,
+  [ask-the-owner](procedures/ask-the-owner.md). The trigger was the owner's, in their words: a
+  million questions and no algorithm for finding answers, arriving as pages of prose citing
+  ticket numbers. Two failures sit behind that and only the second gets attention. The first is
+  volume — an agent asks what `SPEC.md` already answers, or what P6 says to decide and record.
+  The second is shape.
+
+  The structural cause is an asymmetry rather than a wording habit: an agent accumulates context
+  all session and the owner does not, so every question is asked from a position of much more
+  context than the person answering it has. That is what losing control of a project feels like
+  from the inside — being asked to arbitrate details whose origin you never saw. Hence two rules
+  that are not about phrasing: a question must rebuild its own context in one sentence, and it
+  must arrive **before** the work rather than after, because afterwards it is an approval
+  request whatever its punctuation.
+
+  The anchor that makes it nytka's rather than generic advice is that the format already names
+  the only three points where a human is structurally required — `acceptedBy` leaving `proposed`,
+  criteria checked leaving `review`, and a decision when an `unresolved.md` trigger fires. A
+  question mapping to none of the three is almost always already answered or cheap enough to
+  decide. The short form ships in `templates/project/AGENTS.md`, because this repo is referenced
+  and not installed, so a scaffolded project would otherwise never see it.
+
+  It was used the same hour it was written: the two tasks sitting in `review` were put to the
+  owner as two questions with costed options, and both closed.
+
+- **2026-07-31** — **`task-blocked-consistency` earned its keep twice in one session, unprompted.**
+  Closing the lifecycle work left three tasks saying `blocked` with nothing open in `blockedBy`,
+  and the check said so before anyone looked. On the third — TOOL-006 — it exposed a real error
+  in a note written the day before, which had predicted this moment and concluded there would be
+  nothing to put in `blockedBy`. There was: criterion 3 waits on ADOPT-001, in the same registry.
+  The format gap 0008 recorded is therefore narrower than it was written up as — not "a task
+  waiting on a condition", but "a task waiting on work in another repo", which is the second time
+  that shape has come up this week.
+
+  Under [0008](decisions/0008-lint-check-rules.md) rule 3 this does **not** move the check toward
+  `error`: same registry, so one origin however many times it fires.
+
 - **2026-07-31** — **the rules for adding a lint check left a task's `context` field and became
-  [0008](decisions/0008-lint-check-rules.md)**, `draft`, awaiting the owner. Four rules had been
+  [0008](decisions/0008-lint-check-rules.md)**, now `stable`. Four rules had been
   articulated in a session on 2026-07-29 and written down in exactly one place: the context field
   of the task asking for them to be written down somewhere else. The cost was not hypothetical — a
   check shipped at `error` on 2026-07-30, which rule 3 forbids, and was demoted the same day.

@@ -1,10 +1,11 @@
 ---
 type: Decision
 title: Execution fields stay out of the task record
-status: draft
+status: stable
 generated: { by: claude-opus-5, at: 2026-07-31 }
 verified:
   - { by: claude-opus-5, at: 2026-07-31, against: task-management-skill-schema }
+  - { by: "human:mike", at: 2026-07-31 }
 confidence: inferred
 stale_after: 2027-01-31
 supersedes: null
@@ -275,3 +276,21 @@ of an existing rule, not a new field.
 - **FMT-001's note that `guardrails` has no nytka equivalent is superseded by this record**, which
   names two. The note stays where it is; P5's habit applies to task context as much as to
   decisions.
+
+## Status
+
+**Confirmed by the owner on 2026-07-31**, closing FMT-001 in the development repo. All six
+rejections were accepted together. Confirming a draft is not the edit P5 forbids — nothing
+accepted changed meaning, because nothing here had been accepted.
+
+The owner was told before confirming which rejection is the weakest: `guardrails`. Its argument
+is that §11.3 and a decision's Consequences already hold what the field would hold, which is true
+but less direct than a dedicated field, and it is the one field of the six that names a failure
+with no existing home *by that name*. The Consequences bullet above states the condition under
+which it reopens — a durable, task-scoped prohibition that resolves to neither §11.3 nor §6 —
+and that path is `unresolved.md`, not an edit here.
+
+This record's own first pass carried four claims stronger than the evidence supported; they were
+re-counted and corrected before promotion, and no verdict moved. Recorded because a record that
+rejects six fields for resting on unverifiable claims is the one that most has to survive its own
+check, and its first pass did not.

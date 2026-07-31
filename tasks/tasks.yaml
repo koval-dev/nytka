@@ -33,7 +33,7 @@ tasks:
 
   - id: SPEC-002
     title: "Name the task lifecycle in SPEC §8"
-    status: review
+    status: done
     priority: high
     owner: mike
     blockedBy: []
@@ -128,6 +128,36 @@ tasks:
           the route 0006 named. `completionSummary` and `evidence` are deliberately absent:
           §8 requires them to enter `done`, not `review`, and writing them now would pre-empt
           the check this state exists for.
+    completionSummary: |
+      SPEC §8 gained a lifecycle. Seven statuses with a "Leaves when" column, a fields-by-state
+      table, and the rule that those fields bind at the transition rather than retroactively —
+      so a task closed before a project adopted this stays conforming and is never backfilled,
+      because reconstructed evidence is the undated claim P4 exists to reject.
+
+      The rule that carries the weight: **a task may not leave `proposed` without a `human:`
+      actor in `acceptedBy`.** That is §5's trust distinction applied to work instead of to
+      claims. Without it, twenty tasks an agent appended read exactly like the ones the owner
+      chose. `acceptedBy` is its own field rather than a reuse of `verified` because §5 derives
+      trust tiers from `verified`, and merging them would have asserted that someone had checked
+      something nobody checked.
+
+      `todo` is kept as a documented alias for `ready`, capped at `info` forever. A task skill
+      written independently, for a different kind of project, by someone not working from this
+      spec, arrived at `todo | in_progress | blocked | done`. Overruling that convergence to gain
+      one word would have cost every existing registry a rewrite on publication day.
+
+      Closed 2026-07-31 by the owner, who reviewed the criteria rather than the author doing so.
+    evidence:
+      - "SPEC.md §8 carries the Lifecycle, Fields-by-state and Existing-tasks subsections; §13
+         lists unknown task status among what a consumer must not reject (2026-07-31)"
+      - "decisions/0006-task-lifecycle.md: status stable, verified by human:mike at 2026-07-30,
+         Status section recording both settlements"
+      - "node tools/nytka-lint.mjs . — 0 errors, 0 warnings, 0 info across 22 documents
+         (2026-07-31); the unknown-status check reads every task and reported none"
+      - "SPEC-003 in this file is the worked instance of criterion 3 — proposed, carrying
+         proposedBy, readable as agent-originated without knowing any convention"
+      - "the review that closed this was the owner's, 2026-07-31, against the criteria as listed
+         rather than against the author's summary of them"
     created: 2026-07-28
     updated: 2026-07-31
 
@@ -189,7 +219,7 @@ tasks:
     status: blocked
     priority: low
     owner: mike
-    blockedBy: [TOOL-002]
+    blockedBy: [ADOPT-001]
     context: |
       C11 (`unfilled-placeholder`, `template-comment`) shipped 2026-07-30 in kd-nytka and
       currently reports at `warn`. It went out at `error` and was demoted the same day under
@@ -281,6 +311,29 @@ tasks:
           so when TOOL-002 closes this one has nothing to put there, and §8 will push it to
           `ready` while it is not startable. Recorded in 0008's consequences as a gap in the
           format rather than fixed here.
+      - at: 2026-07-31
+        note: |
+          **TOOL-002 closed, the predicted moment arrived, and the prediction was half wrong.**
+          `blockedBy` went stale, `task-blocked-consistency` said so unprompted, and the
+          mechanically correct move was `ready` on a task nobody can start — exactly as the entry
+          above warned.
+
+          What the entry got wrong is that there was nothing to point at. Criterion 3 —
+          *promotion turns no existing warning into an error unexamined* — waits on the two
+          adoptions' unfilled safety-rule placeholders being answered, and that is **ADOPT-001**,
+          open in this registry. So `blockedBy: [ADOPT-001]` is a real dependency, not a
+          placeholder kept to satisfy a rule, and this stays `blocked` honestly.
+
+          The stripper false positive is the other outstanding item and is genuinely not a task
+          here: lint's source is in the development repo under 0009, and it is filed there. It
+          gates promotion under rule 3's third clause, and this task's `blockedBy` cannot name it
+          because `blockedBy` does not cross registries — the same cross-repo shape RT-007 hit,
+          handled the same way, by naming it rather than linking it.
+
+          The format gap 0008 recorded is therefore narrower than it looked: it is not "a task
+          waiting on a condition has nothing to put in `blockedBy`", it is "a task waiting on
+          work in another repo has nothing to put in `blockedBy`". That is a smaller and more
+          tractable problem, and it is the second time this week it has come up.
     created: 2026-07-30
     updated: 2026-07-31
 
@@ -302,7 +355,7 @@ tasks:
 
   - id: TOOL-002
     title: "Write down the rules for adding a lint check"
-    status: review
+    status: done
     priority: high
     owner: mike
     blockedBy: []
@@ -420,6 +473,44 @@ tasks:
           whoever did the work does not also get to declare it met, and all three criteria were
           checked inside the session that did the work. `completionSummary` and `evidence` are
           deliberately absent — §8 requires them to enter `done`, not `review`.
+    completionSummary: |
+      The rules for adding a lint check are [0008](../decisions/0008-lint-check-rules.md),
+      `stable` from 2026-07-31, reachable from `procedures/lint.md` including an "Adding a
+      check" section that says to read them before picking a level.
+
+      Five rules, not the four this task named. The fifth — **a check must not fire on work that
+      was correct when it was done** — has two named instances and does not follow from the other
+      four: the `done`-required-field checks would be correct by their own logic on every task
+      they flagged and wrong under §8 on every one, because those fields bind at the transition.
+
+      Rule 1 was corrected rather than transcribed. As stated here it said `error` means the
+      package contradicts itself or the calendar, which described three of lint's five error
+      checks; the other two error because §13 *requires* something, a different reason. The code
+      had drawn the line correctly for a week while the rule its authors wrote down had not.
+
+      Rule 3 gained the definition it was missing. "Right in practice" is two correct findings
+      from inputs that do not share an origin, at least one from somewhere nobody predicted, no
+      outstanding false positive against the check as it stands, and nothing going red unexamined.
+      Independence is about origin, not count: two packages scaffolded from one template are one
+      observation wearing two hats.
+
+      Applying that bar disqualified the check waiting for promotion, on a ground nobody had
+      spotted — Markdown permits a code span across a newline, the stripper's pattern excludes
+      newlines, so a wrapped span survives stripping and its contents get reported as prose.
+
+      Closed 2026-07-31 by the owner, who confirmed the rules at the same time. The strictness of
+      rule 3 was put to them explicitly as the thing most likely to be wrong, and accepted as a
+      standing rule rather than a one-off.
+    evidence:
+      - "decisions/0008-lint-check-rules.md: five rules, the four-clause definition of right in
+         practice, and the ceiling clause on rule 1 — stable, verified human:mike 2026-07-31"
+      - "procedures/lint.md links 0008 in four places, including the Adding a check section"
+      - "`grep -n 'conformance rules expressed' AGENTS.md` exits 1 — the phrasing criterion 2
+         names is gone (2026-07-31)"
+      - "`grep -rn 'TOOL-002 rule' src/ tools/` in both repos returns nothing: the lint source
+         cited this task for rules 3 and 4 and now cites the decision (2026-07-31)"
+      - "node tools/nytka-lint.mjs . — 0 errors, 0 warnings, 0 info across 22 documents; the
+         development repo 0/0/0 across 28 (2026-07-31)"
     created: 2026-07-29
     updated: 2026-07-31
 
