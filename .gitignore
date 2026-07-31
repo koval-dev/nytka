@@ -1,5 +1,19 @@
+# Secrets and private context — never committed
 private/
 *.env
 .env*
+
+# …except the scaffolding template's private/, which is the file that DOCUMENTS the rule
+# above. templates/project/private/README.md matches the bare `private/` and was tracked only
+# because it predates that rule — grandfathered, not intended. The same shape, unstated, cost
+# @nytka/cli 0.4.0 the file: in kd-nytka the vendored copy of this template was newer than the
+# ignore rule, so it was never tracked, never checked out on CI, and never packed.
+#
+# The negation names the DIRECTORY, not the file in it: git never descends into an excluded
+# directory, so `!.../private/README.md` on its own re-includes nothing. Verified with
+# `git check-ignore -v --no-index`. `**/` so the same line holds in kd-nytka, where the
+# vendored template sits under packages/cli/.
+!**/templates/project/private/
+
 node_modules/
 .DS_Store

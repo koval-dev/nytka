@@ -45,8 +45,38 @@ decided where lint's source lives. Both lanes run the same conformance code.
 
 ## Recent meaningful changes
 
-- **2026-07-30** — **`tools/` and the published CLI stopped being the same code, and will stay
-  that way until 0.4.0 ships.** `@nytka/cli` 0.4.0 is prepared and **not published**. The registry
+- **2026-07-30** — **`templates/project/private/README.md` was kept here by nothing but the
+  order it arrived in, and the repo that publishes this template lost the file to exactly that
+  gap.** Line 1 of this repo's `.gitignore` is a bare `private/`, which matches the template
+  directory of the same name. The file was tracked anyway, because it predates the rule —
+  grandfathering, not design, and one `git rm --cached` from vanishing with nothing to say so.
+
+  That is checkable rather than theoretical: `@nytka/cli` **0.4.0** on npm scaffolds a project
+  with no `private/` directory at all, under an `AGENTS.md` stating `private/` is gitignored.
+  The same ignore rule, in the repo that vendors this template, matched its copy — which was
+  newer than the rule, so it was never tracked and never packed. `npm pack @nytka/cli@0.4.0`
+  and read it. Fixed in **0.4.1**, published the same day.
+
+  The fix here is one line after `private/`:
+
+  ```
+  !**/templates/project/private/
+  ```
+
+  It names the **directory**, not the README inside it. Git never descends into an excluded
+  directory, so a negation naming the file re-includes nothing — verified in both directions
+  with `git check-ignore -v --no-index` rather than assumed. The `**/` prefix is what lets the
+  identical line hold wherever the template sits, at a repo root or nested under a package.
+
+  This is the third distinct mechanism to delete the same directory from a published package.
+  The first two were npm's: it will not publish a file named `.gitignore`, and it renames one
+  inside a tarball to `.npmignore` on install. The pattern worth keeping is not any of the three
+  — it is that each fix was followed by a test naming the file the *previous* mechanism took, so
+  every one of them passed while the next mechanism shipped. That test is a whole-set diff now.
+
+- **2026-07-30** — **`tools/` and the published CLI stopped being the same code, and stayed
+  that way until 0.4.0 shipped later the same day.** `@nytka/cli` 0.4.0 was prepared and **not
+  published** when this was written; it went out on 2026-07-30, followed by 0.4.1. The registry
   serves 0.3.1, and what that means is checkable rather than a guess — `npm pack @nytka/cli@0.3.1`
   and read it: the template it scaffolds from has no `.gitignore` and no `private/`, its lint has
   no `unfilled-placeholder` check, five of its commands reject `--json`, and its `task block` can
@@ -264,12 +294,12 @@ None.
 | Lint runs clean on itself | yes — 0 errors, 0 warnings, 0 info, 19 documents | 2026-07-30 | `node tools/nytka-lint.mjs .` |
 | A freshly scaffolded package reports its own blanks | yes — 0 errors, 7 warnings | 2026-07-30 | `nytka init` into a temp dir |
 | Lint dependencies | 0 | 2026-07-27 | source |
-| `tools/` is four generated copies | yes — lint and the task commands both regenerated 2026-07-30, so `tools/` is **ahead of published 0.3.1** until 0.4.0 ships | 2026-07-30 | file headers + the source repo's drift check |
+| `tools/` is four generated copies | yes — lint and the task commands both regenerated 2026-07-30. `tools/` was ahead of published 0.3.1 until 0.4.0/0.4.1 shipped the same day | 2026-07-30 | file headers + the source repo's drift check |
 | `npx @nytka/cli lint` runs the same checks | **not today** — 7 warnings here against 1 from 0.3.1, same directory | 2026-07-30 | both run against a fresh `init` scaffold |
 | The task commands answer `--json` | yes in `tools/`; published 0.3.1 rejects the flag on five of them | 2026-07-30 | both run against this repo |
 | Published connectors | 6 (`gsc` 0.3.3, `ga4` 0.2.3, `sanity` 0.3.2, `gtm` 0.1.2, `dataforseo` 0.1.3, `ads` 0.1.1) | 2026-07-29 | npm registry |
-| Published runtime | `@nytka/cli` 0.3.1 — **0.4.0 is prepared and unpublished**; `@nytka/core` 0.1.0 as of 2026-07-29, not re-checked | 2026-07-30 | `npm view @nytka/cli version` |
-| What installing 0.3.1 still gets you | a template with no `.gitignore` and no `private/`, no `unfilled-placeholder` check, `--json` refused, and a `task block` that can unparse a registry | 2026-07-30 | `npm pack @nytka/cli@0.3.1` and read it |
+| Published runtime | `@nytka/cli` **0.4.1** — 0.4.0 shipped 2026-07-30 and 0.4.1 the same day; `@nytka/core` 0.1.0 as of 2026-07-29, not re-checked | 2026-07-30 | `npm view @nytka/cli version` |
+| ~~What installing 0.3.1 still gets you~~ | superseded — 0.3.1 and 0.4.0 both scaffold without `private/`, by two different mechanisms; 0.4.1 is the first release whose template tree is complete | 2026-07-30 | `npm pack @nytka/cli@0.4.1` and read it |
 | A connector has run against a live external system | yes, for five of six | 2026-07-29 | development repo's `current-state.md` |
 
 ## Next deadline

@@ -366,3 +366,50 @@ tasks:
       - "the main-guard was wrong the same way the tools repo had already recorded for its own bins — through a symlink the CLI printed nothing, exit 0; now realpathSync"
     created: 2026-07-30
     updated: 2026-07-30
+
+  - id: TOOL-007
+    title: "The template's private/ survived this repo's ignore rule by grandfathering, not by design"
+    status: done
+    priority: high
+    owner: mike
+    blockedBy: []
+    context: |
+      `templates/project/private/README.md` is the file that tells a scaffolded project where
+      secrets go, and the whole reason `templates/project/gitignore` carries a `private/` line.
+
+      Line 1 of THIS repo's `.gitignore` was a bare `private/`, which matches that template
+      directory. The file was tracked anyway — it was added before the rule existed. So the one
+      document that explains the secrets rule was being kept only by the accident of having
+      arrived first, and a single `git rm --cached` would have removed it with nothing to say
+      so.
+
+      That is not hypothetical. The same shape, in the repo that vendors this template and
+      publishes it, cost `@nytka/cli` the file: `0.4.0` on npm scaffolds a project with no
+      `private/` directory at all, under an `AGENTS.md` stating `private/` is gitignored. The
+      difference between the two repos was which came first, the rule or the file — nothing
+      more. Fixed in `0.4.1`; both are checkable on npm, which is where a reader here should
+      look rather than at a repo they cannot open.
+
+      The fix is one line after `private/`:
+
+          !**/templates/project/private/
+
+      It names the DIRECTORY, not the file inside it. Git never descends into an excluded
+      directory, so a negation naming the README re-includes nothing — checked with
+      `git check-ignore -v --no-index` in both directions rather than assumed. The `**/` prefix
+      is what lets the identical line hold wherever the template sits, at a repo root or nested
+      under a package.
+
+      A real `private/` anywhere else in this repo is still ignored, which was verified rather
+      than reasoned about.
+    acceptanceCriteria:
+      - "templates/project/private/ is re-included by an explicit rule, not by having predated the rule that excludes it"
+      - "`git check-ignore -v --no-index templates/project/private/README.md` reports it NOT ignored"
+      - "a private/ directory anywhere else in this repo is still ignored"
+      - "node tools/nytka-lint.mjs . passes with zero errors"
+    evidence:
+      - "`git check-ignore -v --no-index private/anything.md` -> `.gitignore:2:private/`, while the
+         same command against templates/project/private/README.md exits 1 with no match (2026-07-30)"
+      - "npm: @nytka/cli 0.4.0 ships templates/project without private/; 0.4.1 ships it with"
+    created: 2026-07-30
+    updated: 2026-07-30
