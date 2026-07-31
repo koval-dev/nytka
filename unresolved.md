@@ -129,6 +129,37 @@ shape, or the rule stays "preserve what you did not touch" and says so.
 
 ---
 
+## Can one consequence of a decision go stale without superseding the record?
+
+**Status:** open — raised 2026-07-31 by a case that had no honest answer
+
+§6 and both decision READMEs offer exactly one mechanism: a new record `supersedes` the old, the
+old gets `status: superseded` and `superseded_by`, and both stay forever. That is whole-record,
+and it assumes a decision goes wrong all at once.
+
+[0004](decisions/0004-no-mandated-tracker.md) is the case where it does not. Its decision —
+nytka mandates no tracker, the invariant is one writable source per fact — is correct, binding,
+and is the reason [0009](decisions/0009-tracker-snapshot-is-committed-yaml.md) is shaped the way
+it is. One of its consequences, *"a snapshot generator is per-project"*, no longer holds: it was
+written the day before the line had a repo that ships packages, and six connectors have since
+shown the shape generalises.
+
+Marking 0004 `superseded` would tell every future reader to stop following a rule we are actively
+following. Leaving it silent means anyone reading 0004 gets an out-of-date sentence with nothing
+in the file to say so. 0009 links backwards; nothing links forwards. **A reader who starts at
+0004 — which is what the index sends them to — sees no sign the newer record exists.**
+
+**Working rule:** the newer record names the superseded consequence explicitly and in full, the
+older record is left untouched, and the asymmetry is accepted rather than papered over. Do not
+invent a `partially_superseded_by` field for a sample of one.
+
+**Decision trigger:** the second decision whose consequence goes stale while its decision stands,
+or the first time someone acts on a stale consequence because the record it lives in still reads
+as current. The second is the failure this entry predicts; if it happens, the format needs a
+forward link and the argument for it will be concrete.
+
+---
+
 ## Where does a record of an external mutation live?
 
 **Status:** open

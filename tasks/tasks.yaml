@@ -746,3 +746,49 @@ tasks:
           §8 requires them to enter `done`, not `review`.
     created: 2026-07-31
     updated: 2026-07-31
+
+  - id: SPEC-004
+    title: "Apply 0009 to SPEC §4 — the snapshot line names an unreadable file and gitignores it"
+    status: proposed
+    proposedBy: claude-opus-5
+    priority: high
+    owner: mike
+    blockedBy: []
+    context: |
+      Proposed by an agent on 2026-07-31 while designing the GitHub tracker. Not committed work
+      until a human accepts it — see decision 0006.
+
+      SPEC.md:141 reads:
+
+          snapshot: tasks/snapshot.md   # generated, read-only, gitignored
+
+      Two defects in one line, both predating the use case that exposed them.
+
+      **`.md` is unreadable by this format's own tooling.** `nytka status`, `next`, `task` and
+      `context` parse YAML through `loadTasks()`, and so does lint. Nothing in the line reads
+      markdown as tasks. The example names a file the example's own tools cannot open.
+
+      **`gitignored` defeats the reason §8 gives for the snapshot existing** — "so agents get
+      cheap offline context". Gitignored, it does not survive a clone and does not reach a second
+      machine, so the cheap offline context is available in exactly one working copy. The owner
+      works across several environments and wants the backlog readable in every clone, which is
+      what forced the question.
+
+      [0009](../decisions/0009-tracker-snapshot-is-committed-yaml.md) records the change and the
+      reasoning, including why 0004 is NOT marked superseded even though one of its consequences
+      no longer holds. That asymmetry is its own entry in unresolved.md.
+
+      **This task exists because the SPEC edit waits on the decision being confirmed.** SPEC-002
+      established that sequence and it is why §8 was right when it landed: 0006 was settled by the
+      owner first, then §8 was written. Editing §4 against a `draft` record would invert it.
+
+      The design this serves is in the development repo, which is where a choice constraining more
+      than one repo belongs. What is in scope here is two lines of §4 and nothing else.
+    acceptanceCriteria:
+      - "0009 is confirmed by the owner, or the SPEC edit is abandoned with a reason"
+      - "§4's example names a file the task commands can actually parse"
+      - "§4 no longer says the snapshot is gitignored, and says what makes it distinguishable from an authored registry"
+      - "a project on tracker: file needs no new key and no migration"
+      - "node tools/nytka-lint.mjs . passes with zero errors"
+    created: 2026-07-31
+    updated: 2026-07-31
