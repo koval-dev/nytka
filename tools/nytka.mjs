@@ -2,11 +2,11 @@
 // ---------------------------------------------------------------------------------------
 // GENERATED FILE — DO NOT EDIT.
 //
-// Source:      @nytka/cli/src/lint.mjs
+// Source:      @nytka/cli/src/bin.mjs
 // Regenerate:  npm run vendor  (in the kd-nytka repo, packages/cli)
 //
 // Committed here on purpose: this repo must be runnable with nothing installed, so the
-// lint everyone is asked to run cannot require an npm install first. It is a read-only
+// tools everyone is asked to run cannot require an npm install first. It is a read-only
 // view of a source that lives elsewhere, which is what SPEC P2 permits — one writable
 // definition of conformance, synced in one direction.
 //
@@ -26,7 +26,10 @@
 //   init [dir]              scaffold a new package from templates/project
 //   lint [dir]              run the format checks
 //
-// Options: --status <value>, --today <YYYY-MM-DD>
+// Options: --json, --status <value>, --today <YYYY-MM-DD>
+//
+// --json applies to every command above. Task records follow SPEC.md §8 field for field, so a
+// backlog read here and a backlog read from a tracker describe a task the same way.
 //
 // This is the thin end of the tool. Everything it does lives in tasks.mjs, which is shared with
 // `nytka <command>` from the installed package — so the committed copy and the published CLI
@@ -52,11 +55,15 @@ function isMain () {
   try { return realpathSync(process.argv[1]) === fileURLToPath(import.meta.url) } catch { return false }
 }
 
+// process.exitCode, not process.exit. To a pipe, console.log is asynchronous, and process.exit
+// abandons whatever has not drained — `context` was losing everything past roughly 8 KB to any
+// caller that read it programmatically, silently and with exit 0. Setting the code and letting
+// node leave on its own flushes first. Nothing here holds the event loop open.
 if (isMain()) {
   const args = process.argv.slice(2)
   if (args[0] === 'help' || args.includes('--help') || args.includes('-h')) {
     console.log(usage())
-    process.exit(0)
+  } else {
+    process.exitCode = runTaskCommand(args)
   }
-  process.exit(runTaskCommand(args))
 }

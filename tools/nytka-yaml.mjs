@@ -1,11 +1,11 @@
 // ---------------------------------------------------------------------------------------
 // GENERATED FILE — DO NOT EDIT.
 //
-// Source:      @nytka/cli/src/lint.mjs
+// Source:      @nytka/cli/src/yaml.mjs
 // Regenerate:  npm run vendor  (in the kd-nytka repo, packages/cli)
 //
 // Committed here on purpose: this repo must be runnable with nothing installed, so the
-// lint everyone is asked to run cannot require an npm install first. It is a read-only
+// tools everyone is asked to run cannot require an npm install first. It is a read-only
 // view of a source that lives elsewhere, which is what SPEC P2 permits — one writable
 // definition of conformance, synced in one direction.
 //

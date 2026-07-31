@@ -6,7 +6,7 @@
 // Regenerate:  npm run vendor  (in the kd-nytka repo, packages/cli)
 //
 // Committed here on purpose: this repo must be runnable with nothing installed, so the
-// lint everyone is asked to run cannot require an npm install first. It is a read-only
+// tools everyone is asked to run cannot require an npm install first. It is a read-only
 // view of a source that lives elsewhere, which is what SPEC P2 permits — one writable
 // definition of conformance, synced in one direction.
 //
@@ -273,6 +273,20 @@ export function lintProject (dir = '.', { today = isoDate() } = {}) {
   // the two stop being the same string. A check that flagged both would be muted within a
   // week, and a muted check is worse than no check — it still reads as coverage.
   //
+  // Both findings read the same stripped `prose`. `template-comment` used to test the raw
+  // `text` instead, which made the paragraph above true of one half and false of the other.
+  // Showing an HTML comment marker inside a fence is the only way to write down what this
+  // check looks for, and doing so fired it — so the row in ../nytka procedures/lint.md had
+  // to describe the marker in words rather than show it. That is exactly the muting this
+  // comment warns against, arriving by way of the document that explains the check, and it
+  // is what ../nytka TOOL-006 has to clear before either level can be promoted to `error`.
+  //
+  // Stripping code does not weaken detection, because scaffolded instructions are prose by
+  // construction: they are addressed to whoever fills the file in, and an instruction inside
+  // a fence would read as sample output rather than as guidance. Every `<!--` in
+  // templates/project sits in prose, so a freshly scaffolded package still reports — which
+  // is the case this check was written for and the one the tests pin.
+  //
   // Both levels are warn, including `unfilled-placeholder`, which shipped as an error and was
   // demoted the same day. ../nytka TOOL-002 rule 3: a new check enters as info or warn and is
   // promoted only after it has been right in practice. Being right on the two projects that
@@ -288,7 +302,7 @@ export function lintProject (dir = '.', { today = isoDate() } = {}) {
       if (HTML_TAGS.has(m.slice(1, -1).toLowerCase())) continue
       add('warn', 'unfilled-placeholder', rel, `\`${m}\` is a template placeholder — fill it in or delete the line`)
     }
-    if (text.includes('<!--')) {
+    if (prose.includes('<!--')) {
       add('warn', 'template-comment', rel, 'template instructions (`<!-- ... -->`) still present — scaffolded but not written')
     }
   }
@@ -341,13 +355,17 @@ function main (argv) {
   } catch (e) {
     if (e instanceof LintUsageError) {
       console.error(`nytka-lint: ${e.message}`)
-      process.exit(e.exitCode)
+      process.exitCode = e.exitCode
+      return
     }
     throw e
   }
 
+  // process.exitCode, not process.exit: to a pipe console.log is asynchronous, and process.exit
+  // abandons whatever has not drained. A project with enough findings to fill 8 KB of --json was
+  // handing a caller a half-written document and exit 0.
   console.log(asJson ? formatJson(result) : formatReport(result))
-  process.exit(result.counts.error > 0 ? 1 : 0)
+  process.exitCode = result.counts.error > 0 ? 1 : 0
 }
 
 /**

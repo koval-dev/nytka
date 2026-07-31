@@ -9,6 +9,7 @@ verified:
   - { by: claude-opus-5, at: 2026-07-29, against: kd-nytka-working-tree }
   - { by: claude-opus-5, at: 2026-07-30, against: github-api }
   - { by: claude-opus-5, at: 2026-07-30, against: kd-nytka-working-tree }
+  - { by: claude-opus-5, at: 2026-07-30, against: npm-registry }
 confidence: inferred
 ---
 
@@ -44,18 +45,88 @@ decided where lint's source lives. Both lanes run the same conformance code.
 
 ## Recent meaningful changes
 
+- **2026-07-30** — **`tools/` and the published CLI stopped being the same code, and will stay
+  that way until 0.4.0 ships.** `@nytka/cli` 0.4.0 is prepared and **not published**. The registry
+  serves 0.3.1, and what that means is checkable rather than a guess — `npm pack @nytka/cli@0.3.1`
+  and read it: the template it scaffolds from has no `.gitignore` and no `private/`, its lint has
+  no `unfilled-placeholder` check, five of its commands reject `--json`, and its `task block` can
+  leave a registry unparseable. All four are fixed in the files vendored here and in none of the
+  bytes on npm. The visible consequence is that the two lanes disagree today: `node
+  tools/nytka-lint.mjs` reports 7 warnings on a freshly scaffolded package where `npx
+  @nytka/cli@0.3.1 lint` reports 1. `README.md` claimed those two "run the same checks, because
+  they are the same code" — true of the source, not of what a reader can install this afternoon,
+  and now corrected to say which. A vendored copy being ahead between releases is the normal state
+  under 0009; a public file asserting the two are interchangeable is not.
+
+- **2026-07-30** — **`nytka task block|start|done` could unparse the registry and print a success
+  line over it.** Adding a field a task did not already carry inserted it *before* the block's
+  last line rather than after it. Where a task ended in a nested list and the next one followed
+  immediately — or a section-header comment did, with no blank line between — the new key landed
+  inside that list, the file stopped parsing, and every task in it went invisible; `status` then
+  reported an empty backlog through a command that had just said `A-1 -> blocked` and exited 0.
+  This repo's own registry was never at risk: a blank line sits between every task here, and that
+  is the shape the old code happened to get right. The fix that matters is not the corrected
+  offset. Every edit now re-reads and re-parses the file, checks that the task it meant to change
+  reads back as intended and that **every other task is byte-identical to its pre-image**, and on
+  any mismatch restores the bytes it started from and exits non-zero. Worth recording here rather
+  than only where the code lives, because it is the failure this whole format exists to prevent,
+  committed by the tool that reads the format: not a wrong answer, a wrong answer wearing a
+  success line.
+
+  One defect surfaced from that guard and was left in on purpose. The field edit matches the first
+  `key:` at any depth, so a task with no top-level `status` but a `status` nested inside `workLog`
+  gets the `workLog` rewritten. Neither live registry has that shape, and narrowing the match
+  would change which line every edit targets, including all the ones that are currently correct.
+  Carried knowingly: the guard turns it from silent damage into a loud refusal, which is the trade
+  worth taking while the narrower matcher is unproven.
+
+- **2026-07-30** — **the task commands stopped contradicting their own help text, in three
+  places.** `nytka status|next|task|context|init --json` hard-errored with *unknown option
+  --json* while `--json   Machine-readable output. Every command supports it` sat one screen
+  above it in the same `--help`. Five commands refused the flag where `lint`, `check` and `info`
+  answered it — wrong since 0.2.0, and still wrong in what npm serves today. All five answer
+  now, and the shape is one contract instead of five
+  per-command projections, because the consumers it is for (a tracker provider, an adapter, an
+  agent running `next --json` to pick work) have to hand the same record to each other: SPEC §8's
+  ten fields first and always present — absent scalar `null`, absent list `[]` — then every extra
+  key the registry declares, then `actionable` and `waitingOn` assigned **last**, so a registry
+  that happens to use either name cannot shadow the computed answer. The help text stopped
+  overclaiming too: "Every command but help supports it". Two smaller lies went with it.
+  `--x=y` was taken on trust, so `--stats=todo` set a key nobody read and the command listed the
+  whole backlog as though no filter had been asked for, while the spaced form had always rejected
+  an unknown name. And `process.exit()` abandons a pipe that has not drained: `nytka context <id>`
+  produces 20 KB here and was handing any programmatic reader everything up to roughly 8 KB of it,
+  with exit 0. `nytka-lint --json` had the same defect. Both set `process.exitCode` now and let
+  node leave on its own. One family, three instances: the exit code said the answer was complete.
+
 - **2026-07-30** — **the secrets discipline was the one part of the template that never shipped.**
   npm refuses to publish a file named `.gitignore` *and* reads it as pack instructions on the way
   out, so the template's own `private/` rule removed `private/` from the tarball while the
   `.gitignore` removed itself: 14 of 16 template files published. Every project scaffolded with
   `npx @nytka/cli init` arrived with no gitignore and no `private/`, under an `AGENTS.md` still
   saying "`private/` is gitignored" — a false claim about where secrets are safe, and the reason
-  kd-agency has neither. Fixed by `templates/project/.npmignore` (`!.gitignore`), which overrides
-  the ignore source and puts the file back; npm strips `.npmignore` itself and `init` skips it, so
-  nothing reaches a project. No rename was needed — the first fix considered renamed the template
-  file and would have made the manual `cp -R` path worse for nothing. Same failure family as
-  0.3.0's missing `templates/` in `files`: correct in the working tree, silently wrong from the
-  registry. The test now asserts against the tarball and fails without the fix.
+  kd-agency has neither. The first fix was `templates/project/.npmignore` (`!.gitignore`), which
+  overrides the ignore source and puts the file back in the tarball, and it was argued at the time
+  that no rename was needed. **That held for a little over an hour — see the entry below.** Same
+  failure family as 0.3.0's missing `templates/` in `files`: correct in the working tree, silently
+  wrong from the registry. The test now asserts against the tarball and fails without the fix.
+
+- **2026-07-30, later** — **npm mangles `.gitignore` in *both* directions, and the first fix only
+  covered one.** It refuses to publish a file by that name; it also renames any `.gitignore` it
+  finds in a tarball to `.npmignore` **on install**. The `.npmignore` fix above cleared the first
+  hurdle and lost to the second, so a package installed from the registry still had no gitignore
+  to scaffold from — the same user-visible failure, one step further down the pipe, and invisible
+  to a test that stops at the tarball. The template now carries the file **undotted** as
+  `templates/project/gitignore`, a name npm has no opinion about in either direction, and `init`
+  writes it out dotted. `.npmignore` is deleted; it has nothing left to override.
+  This is the rename the earlier entry talked itself out of, and the cost it predicted is real:
+  `cp -R templates/project` now hands you a file called `gitignore` that git does not read, so on
+  the manual path `private/` is untracked-but-unignored until someone renames it. That is a worse
+  trap than the `.npmignore` it replaces, because nothing prints and nothing checks —
+  `procedures/init-project.md` now warns about it in the step where the choice is made. The lesson
+  is not "rename sooner". It is that the fix was verified against the artefact that was broken
+  (the tarball) rather than against the thing anyone actually wanted (a scaffolded project with a
+  working gitignore), and those came apart one npm behaviour later.
 
 - **2026-07-30** — **`init` now ends at a lint report rather than at "files exist".**
   `templates/project/AGENTS.md` shipped `node <path-to-nytka>/tools/nytka-lint.mjs .`, a
@@ -190,13 +261,15 @@ None.
 | Brand assets here match the hub byte for byte | yes, all 4 registered — the logomark under a corrected filename | 2026-07-30 | md5 across both working trees |
 | Lint reads `tasks/tasks.yaml` | **no** | 2026-07-30 | source — 0 occurrences of "tasks" |
 | Adopters in production | 1 project + 1 tooling line (8 published packages) | 2026-07-29 | npm registry |
-| Lint runs clean on itself | yes | 2026-07-30 | `node tools/nytka-lint.mjs .` |
+| Lint runs clean on itself | yes — 0 errors, 0 warnings, 0 info, 19 documents | 2026-07-30 | `node tools/nytka-lint.mjs .` |
 | A freshly scaffolded package reports its own blanks | yes — 0 errors, 7 warnings | 2026-07-30 | `nytka init` into a temp dir |
 | Lint dependencies | 0 | 2026-07-27 | source |
-| `tools/nytka-lint.mjs` is a generated copy | yes — regenerated 2026-07-30, so it is **ahead of published 0.3.1** until the next release | 2026-07-30 | file header + `npm run vendor` |
-| `npx @nytka/cli lint` runs the same checks | yes | 2026-07-29 | run against this repo from the registry |
+| `tools/` is four generated copies | yes — lint and the task commands both regenerated 2026-07-30, so `tools/` is **ahead of published 0.3.1** until 0.4.0 ships | 2026-07-30 | file headers + the source repo's drift check |
+| `npx @nytka/cli lint` runs the same checks | **not today** — 7 warnings here against 1 from 0.3.1, same directory | 2026-07-30 | both run against a fresh `init` scaffold |
+| The task commands answer `--json` | yes in `tools/`; published 0.3.1 rejects the flag on five of them | 2026-07-30 | both run against this repo |
 | Published connectors | 6 (`gsc` 0.3.3, `ga4` 0.2.3, `sanity` 0.3.2, `gtm` 0.1.2, `dataforseo` 0.1.3, `ads` 0.1.1) | 2026-07-29 | npm registry |
-| Published runtime | `@nytka/cli` 0.3.1; `@nytka/core` 0.1.0 as of 2026-07-29, not re-checked | 2026-07-30 | `npm view @nytka/cli version` |
+| Published runtime | `@nytka/cli` 0.3.1 — **0.4.0 is prepared and unpublished**; `@nytka/core` 0.1.0 as of 2026-07-29, not re-checked | 2026-07-30 | `npm view @nytka/cli version` |
+| What installing 0.3.1 still gets you | a template with no `.gitignore` and no `private/`, no `unfilled-placeholder` check, `--json` refused, and a `task block` that can unparse a registry | 2026-07-30 | `npm pack @nytka/cli@0.3.1` and read it |
 | A connector has run against a live external system | yes, for five of six | 2026-07-29 | development repo's `current-state.md` |
 
 ## Next deadline

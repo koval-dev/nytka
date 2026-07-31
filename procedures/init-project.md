@@ -29,9 +29,17 @@ become the directory name — and ends by linting what it just wrote. The errors
 the blanks no tool can fill for you; steps 2 and 3 are how you clear them.
 
 A plain `cp -R nytka/templates/project` still works and is roughly what `init` does underneath,
-but it copies the placeholders verbatim with nothing afterwards checking that you replaced
-them, and it hands you the template's `.npmignore` — packaging metadata that `init` skips and
-that no project should carry. Delete it if you go that route.
+but it copies the placeholders verbatim with nothing afterwards checking that you replaced them,
+and it leaves you one rename short of a working gitignore:
+
+```bash
+mv gitignore .gitignore     # cp -R gives you the undotted name
+```
+
+The template carries that file undotted on purpose — npm will not publish a `.gitignore`, and it
+renames one back to `.npmignore` on install, so the dot cannot survive the registry in either
+direction. `init` writes it out dotted for you; `cp -R` does not. Until you rename it, `private/`
+is not ignored, nothing warns you, and `AGENTS.md` in the same directory says it is.
 
 ### 2. Fill `project.yaml`
 

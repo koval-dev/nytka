@@ -1,11 +1,11 @@
 // ---------------------------------------------------------------------------------------
 // GENERATED FILE — DO NOT EDIT.
 //
-// Source:      @nytka/cli/src/lint.mjs
+// Source:      @nytka/cli/src/tasks.mjs
 // Regenerate:  npm run vendor  (in the kd-nytka repo, packages/cli)
 //
 // Committed here on purpose: this repo must be runnable with nothing installed, so the
-// lint everyone is asked to run cannot require an npm install first. It is a read-only
+// tools everyone is asked to run cannot require an npm install first. It is a read-only
 // view of a source that lives elsewhere, which is what SPEC P2 permits — one writable
 // definition of conformance, synced in one direction.
 //
@@ -24,13 +24,17 @@
 //   1. Import nothing but `node:` builtins and sibling modules by relative path.
 //   2. Keep exports free of argv and process.exit. runTaskCommand takes its argv and returns an
 //      exit code; only the bin decides what to do with it.
+//
+// Every command here also answers to `--json`. cli.mjs promised that for the whole CLI from
+// 0.2.0 and these five commands rejected the flag outright — see the contract note by taskJson
+// for what the shape is and why.
 
 import { readFileSync, writeFileSync, existsSync, readdirSync, statSync, mkdirSync, copyFileSync } from 'node:fs'
 import { join, resolve, dirname, relative, basename } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
 import { parseYaml } from './nytka-yaml.mjs'
-import { lintProject, formatReport, isoDate } from './nytka-lint.mjs'
+import { lintProject, formatReport, formatJson, isoDate } from './nytka-lint.mjs'
 
 /** Thrown when a command was called wrongly. The message is already printed by then. */
 class TaskUsageError extends Error {
@@ -54,6 +58,7 @@ function templatesDir () {
  */
 export function runTaskCommand (argv = [], { cwd = process.cwd(), today = isoDate() } = {}) {
   const VALUE_FLAGS = new Set(['today', 'status'])
+  const BOOL_FLAGS = new Set(['json'])
   const flags = {}
   const positional = []
   const flagErrors = []
@@ -61,8 +66,17 @@ export function runTaskCommand (argv = [], { cwd = process.cwd(), today = isoDat
     const a = argv[k]
     if (!a.startsWith('--') || a === '--help') { positional.push(a); continue }
     const eq = a.indexOf('=')
-    if (eq !== -1) { flags[a.slice(2, eq)] = a.slice(eq + 1); continue }
+    if (eq !== -1) {
+      // The `--x=y` form used to be taken on trust, so `--stats=todo` set a key nobody read and
+      // the command listed the whole backlog as if no filter had been asked for. The spaced form
+      // has always rejected an unknown name; this one now agrees with it.
+      const name = a.slice(2, eq)
+      if (!VALUE_FLAGS.has(name) && !BOOL_FLAGS.has(name)) flagErrors.push(`unknown option --${name}`)
+      else flags[name] = a.slice(eq + 1)
+      continue
+    }
     const name = a.slice(2)
+    if (BOOL_FLAGS.has(name)) { flags[name] = true; continue }
     if (!VALUE_FLAGS.has(name)) { flagErrors.push(`unknown option --${name}`); continue }
     const next = argv[k + 1]
     if (next === undefined || next.startsWith('--')) flagErrors.push(`--${name} needs a value`)
@@ -70,6 +84,10 @@ export function runTaskCommand (argv = [], { cwd = process.cwd(), today = isoDat
   }
   const flag = name => (typeof flags[name] === 'string' ? flags[name] : null)
   const TODAY = flag('today') ?? today
+  // `--json=false` is not a documented form, but reading it as "yes" is the one answer that
+  // would be actively wrong, and a caller building argv from a config file will write it.
+  const asJson = 'json' in flags && flags.json !== 'false'
+  const emit = data => console.log(JSON.stringify(data, null, 2))
 
   function frontmatter (text, source = 'document') {
     if (!text.startsWith('---')) return { fm: {}, body: text }
@@ -125,7 +143,8 @@ export function runTaskCommand (argv = [], { cwd = process.cwd(), today = isoDat
     const task = list.find(t => String(t.id) === id)
     if (!task) { console.error(`nytka: no task ${id}`); throw new TaskUsageError() }
     const start = task.__line
-    const lines = readFileSync(file, 'utf8').split('\n')
+    const priorText = readFileSync(file, 'utf8')
+    const lines = priorText.split('\n')
     const itemIndent = lines[start].match(/^ */)[0].length
     let end = lines.length
     for (let n = start + 1; n < lines.length; n++) {
@@ -135,6 +154,17 @@ export function runTaskCommand (argv = [], { cwd = process.cwd(), today = isoDat
       if (ind <= itemIndent && /^\s*-\s/.test(l)) { end = n; break }
       if (ind <= itemIndent && l.trim() && !/^\s/.test(l)) { end = n; break }
     }
+
+    /**
+     * A line between two tasks that belongs to neither. Blank ones, and comments at or outside
+     * the item's own indent — both registries in the line introduce groups of tasks with a
+     * `# ---- phase 1` header, and a key spliced into one of those blocks parses but reads as
+     * sitting on the wrong side of it. A comment indented deeper is left alone: it may be a
+     * line of a `context: |` block rather than a comment at all.
+     */
+    const betweenTasks = l =>
+      !l.trim() || (l.match(/^ */)[0].length <= itemIndent && l.trimStart().startsWith('#'))
+
     for (const [key, value] of Object.entries(fields)) {
       const re = new RegExp(`^(\\s*)${key}\\s*:\\s*(.*)$`)
       let done = false
@@ -142,26 +172,142 @@ export function runTaskCommand (argv = [], { cwd = process.cwd(), today = isoDat
         const m = lines[n].match(re)
         if (m && m[1].length > itemIndent - 2) { lines[n] = `${m[1]}${key}: ${value}`; done = true; break }
       }
-      if (!done) lines.splice(end - 1, 0, `${' '.repeat(itemIndent + 2)}${key}: ${value}`)
+      if (done) continue
+      // `end` is where the NEXT task starts, and the scan above steps over blank lines to reach
+      // it — so `end - 1` is this task's last line only when a blank line, or the empty final
+      // element of a newline-terminated file, happens to sit there. Where one task is followed
+      // immediately by the next `- id:`, `end - 1` IS the last line, and splicing at it put the
+      // new key one line too high: inside a trailing acceptanceCriteria list, leaving the whole
+      // registry unparseable while `task block` still printed its success line (RT-011). Walk
+      // back to the last line that is this task's and insert after it, so the two shapes that
+      // were right by accident are right on purpose.
+      let at = end - 1
+      while (at > start && betweenTasks(lines[at])) at--
+      lines.splice(at + 1, 0, `${' '.repeat(itemIndent + 2)}${key}: ${value}`)
+      end++   // the boundary moved down with the line, so a second new field lands after the first
     }
     // bump the registry's own updated: stamp
     for (let n = 0; n < Math.min(lines.length, 10); n++) {
       if (/^updated\s*:/.test(lines[n])) { lines[n] = `updated: "${TODAY}"`; break }
     }
     writeFileSync(file, lines.join('\n'))
+    verifyWrite(file, id, fields, list, priorText)
     return task
+  }
+
+  /**
+   * Read the registry back and prove the edit landed where it was meant to — for every caller,
+   * not only for `--json`.
+   *
+   * setTaskFields splices lines into a hand-maintained file, so a block boundary it reads
+   * wrongly destroys real work. RT-011 was exactly that: `task block` printed `A-1 -> blocked`,
+   * exited 0, and left a file that no longer parsed, after which `status` reported no tasks at
+   * all. A believable wrong answer is the one failure this tool exists to prevent, and it does
+   * not stop being one because the output mode is a terminal rather than JSON.
+   *
+   * Restoring rather than only reporting: loadTasks parsed the pre-image strictly a moment ago,
+   * so putting those bytes back is a return to a state known to be readable, not a guess. The
+   * alternative hands the owner a hand-repair job for an edit they never made by hand.
+   */
+  function verifyWrite (file, id, fields, priorList, priorText) {
+    const rel = relative(ROOT, file)
+    const abandon = why => {
+      writeFileSync(file, priorText)
+      throw new Error(`the edit to ${id} did not land — ${rel} is unchanged.\n  ${why}`)
+    }
+
+    let doc
+    try { doc = parseYaml(readFileSync(file, 'utf8'), rel) } catch (err) { abandon(err.message) }
+
+    const now = Array.isArray(doc?.tasks) ? doc.tasks : []
+    const wrong = []
+    if (now.length !== priorList.length) wrong.push(`the file now holds ${now.length} tasks, not ${priorList.length}`)
+
+    const written = now.find(t => String(t.id) === id)
+    if (!written) wrong.push(`${id} is no longer in the file`)
+    // Compared through the same reader that will read the file next, so this asks what the
+    // registry now says rather than whether the bytes match what was written.
+    else for (const [key, value] of Object.entries(fields)) {
+      const want = parseYaml(`${key}: ${value}`, rel)[key]
+      if (JSON.stringify(written[key]) !== JSON.stringify(want)) {
+        wrong.push(`${id}.${key} reads ${JSON.stringify(written[key] ?? null)}, not ${JSON.stringify(want)}`)
+      }
+    }
+
+    // One task was edited, so every other one must come back identical. This is what catches an
+    // edit that parses but attached itself to the neighbour.
+    const was = new Map(priorList.map(t => [String(t.id), JSON.stringify(t)]))
+    for (const t of now) {
+      const other = String(t.id)
+      if (other !== id && was.get(other) !== JSON.stringify(t)) {
+        wrong.push(`${other} changed, and the edit was to ${id}`)
+        break
+      }
+    }
+
+    if (wrong.length) abandon(wrong.join('\n  '))
   }
 
   // ------------------------------------------------------------------ output
 
   const PRIORITY = { high: 0, medium: 1, low: 2 }
   const pad = (s, n) => String(s ?? '').padEnd(n)
+  const byPriority = (a, b) => (PRIORITY[a.priority] ?? 3) - (PRIORITY[b.priority] ?? 3)
 
   function isActionable (t, byId) {
     if (t.status !== 'todo' && t.status !== 'blocked') return false
     const blockers = Array.isArray(t.blockedBy) ? t.blockedBy : []
     return blockers.every(b => byId.get(String(b))?.status === 'done')
   }
+
+  // ---------------------------------------------------------------- the --json contract
+  //
+  // One task shape, everywhere a task appears. The consumers this is being built for — a
+  // github-projects provider under SPEC §8, an MCP adapter, an agent running `next --json` to
+  // pick work — all need to hand the same record to each other, so a per-command projection
+  // would only push the reconciling onto them.
+  //
+  // Rules the shape keeps:
+  //   · SPEC.md §8's fields come first and are always present. An absent scalar is null and an
+  //     absent list is [], so nothing has to guard a key before reading it.
+  //   · Everything else the registry declares passes through. §8 is a minimum, not a ceiling —
+  //     the two live backlogs already carry repo, evidence, workLog and proposedBy, and a
+  //     provider syncing a backlog out and back would drop them to a strict projection.
+  //     `__line` is non-enumerable in yaml.mjs and so stays out of this on its own.
+  //   · Errors stay plain text on stderr with a non-zero exit, as they do for `check --json`
+  //     and `info --json`. Machine callers read the exit code; a JSON error object here would
+  //     be a shape only this file speaks.
+
+  const SPEC_FIELDS = ['id', 'title', 'status', 'priority', 'owner', 'blockedBy', 'context',
+    'acceptanceCriteria', 'created', 'updated']
+  const SPEC_LISTS = new Set(['blockedBy', 'acceptanceCriteria'])
+
+  /**
+   * `actionable` and `waitingOn` are computed, not read. They are the `>` marker and the
+   * "waiting on X, Y" line the human output prints, which a caller could otherwise only recover
+   * by reimplementing isActionable against the whole registry. They are assigned last so a
+   * registry that happens to declare either key cannot shadow the computed answer.
+   */
+  function taskJson (t, byId) {
+    const out = {}
+    for (const k of SPEC_FIELDS) {
+      const v = t[k]
+      out[k] = SPEC_LISTS.has(k) ? (Array.isArray(v) ? v.map(String) : []) : (v ?? null)
+    }
+    for (const [k, v] of Object.entries(t)) if (!(k in out)) out[k] = v
+    out.actionable = isActionable(t, byId)
+    out.waitingOn = out.blockedBy.filter(b => byId.get(b)?.status !== 'done')
+    return out
+  }
+
+  /** The identity block, shared by status and context so they cannot describe it differently. */
+  const projectJson = p => ({
+    id: p?.id ?? null,
+    name: p?.name ?? null,
+    status: p?.status ?? null,
+    description: p?.purpose?.description ? String(p.purpose.description).replace(/\s+/g, ' ').trim() : null,
+    components: p?.components && typeof p.components === 'object' ? p.components : null,
+  })
 
   function runLint (dir, today) {
     // Direct call, not a spawn of the vendored script: inside the package lint is an import, and
@@ -177,40 +323,66 @@ export function runTaskCommand (argv = [], { cwd = process.cwd(), today = isoDat
     const { list } = loadTasks()
     const byId = new Map(list.map(t => [String(t.id), t]))
 
+    const csPath = join(root, 'current-state.md')
+    let currentState = null
+    if (existsSync(csPath)) {
+      const text = readFileSync(csPath, 'utf8')
+      const dates = [...text.matchAll(/\b(20\d{2}-\d{2}-\d{2})\b/g)].map(m => m[1]).sort()
+      const newest = dates.at(-1) ?? null
+      const age = newest ? daysBetween(newest, TODAY) : null
+      // null rather than false when the file carries no date: "cannot tell" is what the human
+      // line says, and a machine reading `stale: false` would take it for a fresh document.
+      currentState = { path: relative(root, csPath), date: newest, ageDays: age, stale: newest ? age > 30 : null }
+    }
+
+    const byStatus = {}
+    for (const t of list) byStatus[t.status ?? 'unset'] = (byStatus[t.status ?? 'unset'] ?? 0) + 1
+
+    const lint = runLint(root, TODAY)
+    const ready = list.filter(t => isActionable(t, byId)).sort(byPriority)
+    const stuck = list.filter(t => t.status === 'blocked' && !isActionable(t, byId))
+
+    if (asJson) {
+      return emit({
+        root,
+        today: TODAY,
+        project: projectJson(p),
+        currentState,
+        tasks: { total: list.length, byStatus },
+        // Counts only. status is the overview; `check --json` is where the findings live.
+        lint: lint ? lint.counts : null,
+        // Every ready task, where the human view stops at five and says "… and N more".
+        // Truncation is a decision about a terminal, and a caller cannot undo it.
+        ready: ready.map(t => taskJson(t, byId)),
+        blocked: stuck.map(t => taskJson(t, byId)),
+      })
+    }
+
     console.log(`\n  ${p.name ?? p.id}  (${p.id})  —  ${p.status ?? 'status unset'}`)
     if (p.purpose?.description) {
       console.log(`  ${String(p.purpose.description).replace(/\s+/g, ' ').trim()}`)
     }
     console.log(`  ${root}\n`)
 
-    const csPath = join(root, 'current-state.md')
-    if (existsSync(csPath)) {
-      const text = readFileSync(csPath, 'utf8')
-      const dates = [...text.matchAll(/\b(20\d{2}-\d{2}-\d{2})\b/g)].map(m => m[1]).sort()
-      const newest = dates.at(-1)
-      if (!newest) console.log('  current-state.md   no date — cannot tell if it is current')
+    if (currentState) {
+      if (!currentState.date) console.log('  current-state.md   no date — cannot tell if it is current')
       else {
-        const age = daysBetween(newest, TODAY)
-        console.log(`  current-state.md   ${newest} (${age} day${age === 1 ? '' : 's'} ago)${age > 30 ? '   STALE — likely no longer current' : ''}`)
+        const age = currentState.ageDays
+        console.log(`  current-state.md   ${currentState.date} (${age} day${age === 1 ? '' : 's'} ago)${currentState.stale ? '   STALE — likely no longer current' : ''}`)
       }
     }
 
     if (list.length) {
-      const counts = {}
-      for (const t of list) counts[t.status ?? 'unset'] = (counts[t.status ?? 'unset'] ?? 0) + 1
-      console.log(`  tasks              ${Object.entries(counts).map(([k, v]) => `${v} ${k}`).join(', ')}`)
+      console.log(`  tasks              ${Object.entries(byStatus).map(([k, v]) => `${v} ${k}`).join(', ')}`)
     } else {
       console.log('  tasks              none registered')
     }
 
-    const lint = runLint(root, TODAY)
     if (lint) {
       const c = lint.counts
       console.log(`  lint               ${c.error} error(s), ${c.warn} warning(s), ${c.info} info`)
     }
 
-    const ready = list.filter(t => isActionable(t, byId))
-      .sort((a, b) => (PRIORITY[a.priority] ?? 3) - (PRIORITY[b.priority] ?? 3))
     if (ready.length) {
       console.log('\n  Ready to start')
       for (const t of ready.slice(0, 5)) {
@@ -219,7 +391,6 @@ export function runTaskCommand (argv = [], { cwd = process.cwd(), today = isoDat
       if (ready.length > 5) console.log(`    … and ${ready.length - 5} more`)
     }
 
-    const stuck = list.filter(t => t.status === 'blocked' && !isActionable(t, byId))
     if (stuck.length) {
       console.log('\n  Blocked')
       for (const t of stuck) {
@@ -233,8 +404,11 @@ export function runTaskCommand (argv = [], { cwd = process.cwd(), today = isoDat
   function cmdNext () {
     const { list } = loadTasks()
     const byId = new Map(list.map(t => [String(t.id), t]))
-    const ready = list.filter(t => isActionable(t, byId))
-      .sort((a, b) => (PRIORITY[a.priority] ?? 3) - (PRIORITY[b.priority] ?? 3))
+    const ready = list.filter(t => isActionable(t, byId)).sort(byPriority)
+    // `{ task: null }` rather than an empty object or a bare `null`: an agent asking what to work
+    // on gets one key to read either way, and "nothing is ready" is an answer, not a failure —
+    // which is why this stays exit 0.
+    if (asJson) return emit({ task: ready.length ? taskJson(ready[0], byId) : null })
     if (!ready.length) { console.log('\n  nothing is ready — everything is blocked, done, or in progress\n'); return }
     const t = ready[0]
     console.log(`\n  ${t.id}  ${t.title}`)
@@ -250,6 +424,10 @@ export function runTaskCommand (argv = [], { cwd = process.cwd(), today = isoDat
     if (!sub || sub === 'list') {
       const want = flag('status')
       const rows = list.filter(t => !want || t.status === want)
+      // The filter is echoed back because an empty result has two causes — a backlog with no
+      // such task, and a status nobody uses. The human branch below disambiguates them in prose;
+      // for a caller, seeing what it actually asked for does the same job.
+      if (asJson) return emit({ filter: { status: want }, tasks: rows.map(t => taskJson(t, byId)) })
       if (!rows.length) {
         // "no tasks" for an unrecognised status would read as an empty backlog. Name the ones
         // that are actually in the file instead.
@@ -271,6 +449,7 @@ export function runTaskCommand (argv = [], { cwd = process.cwd(), today = isoDat
     if (sub === 'show') {
       const t = byId.get(String(id))
       if (!t) { console.error(`nytka: no task ${id}`); throw new TaskUsageError() }
+      if (asJson) return emit({ task: taskJson(t, byId) })
       console.log(`\n  ${t.id}  ${t.title}\n`)
       for (const k of ['status', 'priority', 'owner', 'repo', 'created', 'updated']) {
         if (t[k] != null && t[k] !== '') console.log(`  ${pad(k, 12)} ${t[k]}`)
@@ -298,6 +477,25 @@ export function runTaskCommand (argv = [], { cwd = process.cwd(), today = isoDat
         fields.blockedBy = `[${cur.join(', ')}]`
       }
       const t = setTaskFields(String(id), fields)
+
+      if (asJson) {
+        // Re-read after the write, so what is reported is what the file now says rather than
+        // what this process meant to write. That an edit landed at all is setTaskFields'
+        // business now — it verifies for every output mode since RT-011, because the human path
+        // was the one printing success over a corrupted registry. This read is for the record
+        // itself and for what closing the task freed.
+        const after = loadTasks()
+        const afterById = new Map(after.list.map(x => [String(x.id), x]))
+        // Tasks that named this one as a blocker. Only `done` can free them, so start and block
+        // report [] — which is true, not a hole in the shape.
+        const freed = sub !== 'done' ? [] : after.list
+          .filter(x => (Array.isArray(x.blockedBy) ? x.blockedBy : []).map(String).includes(String(id)))
+        return emit({
+          task: taskJson(afterById.get(String(t.id)), afterById),
+          unblocked: freed.map(x => taskJson(x, afterById)),
+        })
+      }
+
       console.log(`\n  ${t.id} -> ${status}   (updated ${TODAY})`)
       if (sub === 'done') {
         const unblocked = list.filter(x => (Array.isArray(x.blockedBy) ? x.blockedBy : []).map(String).includes(String(id)))
@@ -321,7 +519,8 @@ export function runTaskCommand (argv = [], { cwd = process.cwd(), today = isoDat
     if (!id) { console.error('nytka: context needs a task id'); throw new TaskUsageError() }
     const p = loadProject()
     const { list } = loadTasks()
-    const t = list.find(x => String(x.id) === String(id))
+    const byId = new Map(list.map(x => [String(x.id), x]))
+    const t = byId.get(String(id))
     if (!t) { console.error(`nytka: no task ${id}`); throw new TaskUsageError() }
 
     const out = []
@@ -344,10 +543,12 @@ export function runTaskCommand (argv = [], { cwd = process.cwd(), today = isoDat
     }
     out.push('')
 
+    const loaded = []
     const csPath = join(root, 'current-state.md')
     if (existsSync(csPath)) {
       const { body } = frontmatter(readFileSync(csPath, 'utf8'), 'current-state.md')
       out.push('## Current state', '', body.replace(/^# .*\n/, '').trim(), '')
+      loaded.push('current-state.md')
     }
 
     out.push('## The task', '')
@@ -370,41 +571,64 @@ export function runTaskCommand (argv = [], { cwd = process.cwd(), today = isoDat
     for (const m of prose.matchAll(/(?:^|[\s(`])((?:decisions|procedures|research|artifacts|references|datasets)\/[\w./-]+\.(?:md|ya?ml|json))/g)) {
       named.add(m[1])
     }
-    const loaded = []
+    const referenced = []
     for (const rel of named) {
       const abs = join(root, rel)
       if (!existsSync(abs) || statSync(abs).isDirectory()) continue
-      loaded.push(rel)
+      referenced.push(rel)
     }
-    if (loaded.length) {
+    if (referenced.length) {
       out.push('## Referenced by this task', '')
-      for (const rel of loaded) {
+      for (const rel of referenced) {
         const raw = readFileSync(join(root, rel), 'utf8')
         const { body } = rel.endsWith('.md') ? frontmatter(raw, rel) : { body: raw }
         out.push(`### \`${rel}\``, '', body.trim(), '')
+        loaded.push(rel)
       }
     }
 
     // Decision index only — titles, not bodies. Enough to know what exists.
     const decDir = join(root, 'decisions')
+    const decisions = []
     if (existsSync(decDir)) {
       const files = readdirSync(decDir).filter(f => /^\d{4}.*\.md$/.test(f)).sort()
-      const rest = files.filter(f => !loaded.includes(`decisions/${f}`))
-      if (rest.length) {
+      for (const f of files.filter(f => !referenced.includes(`decisions/${f}`))) {
+        const { fm } = frontmatter(readFileSync(join(decDir, f), 'utf8'), `decisions/${f}`)
+        decisions.push({ path: `decisions/${f}`, title: fm.title ?? null, status: fm.status ?? null })
+      }
+      if (decisions.length) {
         out.push('## Other decisions in force', '')
         out.push('Titles only. Load one only if it bears on this task.', '')
-        for (const f of rest) {
-          const { fm } = frontmatter(readFileSync(join(decDir, f), 'utf8'), `decisions/${f}`)
-          out.push(`- \`decisions/${f}\` — ${fm.title ?? '(untitled)'}${fm.status && fm.status !== 'stable' ? ` *(${fm.status})*` : ''}`)
+        for (const d of decisions) {
+          out.push(`- \`${d.path}\` — ${d.title ?? '(untitled)'}${d.status && d.status !== 'stable' ? ` *(${d.status})*` : ''}`)
         }
         out.push('')
       }
     }
 
+    const notLoaded = ['research/', 'history/', 'datasets/']
     out.push('## Not loaded, deliberately', '')
-    out.push('`research/`, `history/`, `datasets/` payloads and archives are never auto-scanned')
+    out.push(`\`${notLoaded.join('`, `')}\` payloads and archives are never auto-scanned`)
     out.push('(SPEC.md §10). Ask for one by name if this task needs it.')
     out.push('')
+
+    if (asJson) {
+      return emit({
+        root,
+        today: TODAY,
+        project: projectJson(p),
+        task: taskJson(t, byId),
+        // The assembled document is what this command is for. Handing back the parts and making
+        // the caller reassemble them would leave `--json` strictly less useful than no flag, so
+        // the markdown ships as-is and the rest of this object is its provenance: which files
+        // went into it, which decisions were named but left unopened, and which trees SPEC §10
+        // says are never swept. Bodies appear once, in the markdown, and are not repeated here.
+        markdown: out.join('\n'),
+        loaded,
+        decisions,
+        notLoaded,
+      })
+    }
 
     console.log(out.join('\n'))
   }
@@ -420,39 +644,70 @@ export function runTaskCommand (argv = [], { cwd = process.cwd(), today = isoDat
     return text.replace(/<project>/g, projectName)
   }
 
+  /**
+   * init gets `--json` too, rather than being carved out of the promise the help text makes.
+   *
+   * The case against: init is scaffolding, and what it prints is progress rather than data. The
+   * case that won: that progress is already a list of paths plus a lint report, and a caller
+   * acts on both — an agent scaffolding unattended needs to know which files it now owns and
+   * which blanks are still open, and without this it can only learn that by scraping
+   * `create <path>` lines back out of a terminal transcript.
+   *
+   * The alternative was to leave init out and have the help text name the commands that do take
+   * the flag. That trades one sentence which stays true for a list that has to be re-checked
+   * every time a command is added — the exact drift this whole change exists to undo.
+   */
   function cmdInit (target) {
     const src = templatesDir()
     if (!existsSync(src)) { console.error(`nytka: template not found at ${src}`); throw new TaskUsageError() }
     const dest = resolve(target ?? '.')
     const projectName = basename(dest)
-    let created = 0, skipped = 0
+    const created = [], skipped = []
     const walk = (from, to) => {
       mkdirSync(to, { recursive: true })
       for (const name of readdirSync(from)) {
-        // Packaging metadata for the template itself, not project content. It exists only so
-        // npm ships the template's `.gitignore` instead of eating it; see templates/.npmignore.
-        if (name === '.npmignore') continue
-        const f = join(from, name), t = join(to, name)
+        const f = join(from, name)
+        // The template carries it undotted and it is written out dotted. npm mangles this one
+        // filename in BOTH directions: it will not publish a file named `.gitignore`, and on
+        // install it renames any `.gitignore` in a tarball to `.npmignore`. 0.3.1 lost the file
+        // to the first half; the `.npmignore` fix that followed cleared the tarball and was
+        // beaten by the second half, so a package installed from the registry still had no
+        // gitignore to scaffold from. A name npm has no opinion about survives both.
+        const out = name === 'gitignore' ? '.gitignore' : name
+        const t = join(to, out)
         if (statSync(f).isDirectory()) walk(f, t)
-        else if (existsSync(t)) { skipped++; console.log(`  skip   ${relative(dest, t)}`) }
+        else if (existsSync(t)) { skipped.push(relative(dest, t)); if (!asJson) console.log(`  skip   ${relative(dest, t)}`) }
         else {
           const rel = relative(dest, t)
           if (/\.(md|yaml)$/.test(name)) writeFileSync(t, substitute(rel, readFileSync(f, 'utf8'), projectName))
           else copyFileSync(f, t)
-          created++
-          console.log(`  create ${rel}`)
+          created.push(rel)
+          if (!asJson) console.log(`  create ${rel}`)
         }
       }
     }
-    console.log(`\n  scaffolding into ${dest}\n`)
+    if (!asJson) console.log(`\n  scaffolding into ${dest}\n`)
     walk(src, dest)
-    console.log(`\n  ${created} created, ${skipped} left alone\n`)
 
     // Init ends in a lint report rather than in advice. Its old last line was a list of things
     // to remember, which is the same non-enforcement that let a placeholder reach two projects:
     // nothing downstream could tell a filled-in package from a raw copy. Now every remaining
     // blank is a finding with a filename against it, and `nytka lint .` re-asks the question.
     const result = runLint(dest, TODAY)
+
+    // The findings are the payload for a caller too, so they come through structured rather than
+    // as the rendered report — counts and findings, matching lint's own --json under those keys.
+    if (asJson) {
+      return emit({
+        root: dest,
+        today: TODAY,
+        created,
+        skipped,
+        lint: result ? { counts: result.counts, findings: result.findings } : null,
+      })
+    }
+
+    console.log(`\n  ${created.length} created, ${skipped.length} left alone\n`)
     if (result) console.log(formatReport(result))
     console.log('  the findings above are the blanks only you can fill — then `git init`.\n')
   }
@@ -461,7 +716,7 @@ export function runTaskCommand (argv = [], { cwd = process.cwd(), today = isoDat
     const target = dir ?? ROOT ?? '.'
     const result = runLint(target, TODAY)
     if (!result) { console.error('nytka: lint could not run'); return 2 }
-    console.log(formatReport(result))
+    console.log(asJson ? formatJson(result) : formatReport(result))
     return result.counts.error > 0 ? 1 : 0
   }
 
@@ -470,7 +725,7 @@ export function runTaskCommand (argv = [], { cwd = process.cwd(), today = isoDat
   const [cmd, a, b, c] = positional
   if (flagErrors.length) {
     for (const e of flagErrors) console.error(`nytka: ${e}`)
-    console.error('       options are --status <value> and --today <YYYY-MM-DD>\n')
+    console.error('       options are --json, --status <value> and --today <YYYY-MM-DD>\n')
     return 2
   }
   try {

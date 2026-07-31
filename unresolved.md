@@ -173,16 +173,28 @@ without prompting. Drop the ones that were not.
 
 ## Should nytka ship a `query` tool, or stay a format?
 
-**Status:** open
+**Status:** open, and half-answered by something that shipped without asking.
 
-The spec defines three operations but only ships one tool (lint). `ingest` and `query` are
-procedures an agent follows — which is arguably correct, since agents are the runtime.
+The spec defines three operations. `ingest` is still a procedure an agent follows. `query` is
+not, as of 2026-07-30: `nytka context <id>` assembles §10's Task row — the record, the decisions
+and procedures it names, the project identity, `current-state.md` — and prints the index of the
+decisions it deliberately did *not* open. It cites "SPEC.md §10" as its authority. So the count
+in this entry ("only ships one tool") is wrong, and the question moved without the trigger below
+ever firing.
 
-**Working rule:** format and procedures only, plus lint. No retrieval layer, no index, no
-embeddings.
+What it did not become is a retrieval layer. `context` follows links a task already declares;
+there is no index, no ranking and no embeddings, and a task that names nothing gets nothing. The
+distinction worth keeping is between **assembling what a document points at**, which is
+mechanical and cheap to verify, and **finding documents nobody pointed at**, which is the thing
+this entry was actually nervous about.
+
+**Working rule:** format and procedures, plus lint, plus link-following assembly. No index, no
+ranking, no embeddings. A tool may load what a task names; it may not guess what a task meant.
 
 **Decision trigger:** if a package grows past roughly 100 documents and agents start missing
-relevant files, reconsider. Below that, a directory listing is the index.
+relevant files, reconsider. Below that, a directory listing is the index. Separately: the first
+time `context` is asked to return something a task did not name is the moment this stops being
+a working rule and needs a decision.
 
 ---
 

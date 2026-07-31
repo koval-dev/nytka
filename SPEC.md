@@ -342,6 +342,10 @@ Load the narrowest level that answers the question.
 
 `research/`, `history/`, `datasets/` payloads and archives are never auto-scanned.
 
+The Task row is the one that is mechanised: `nytka context <id>` assembles it and prints what it
+deliberately left unopened. It loads what a task names, never what a task might have meant —
+query stays link-following, not retrieval.
+
 ### Lint
 
 A health check, run at session start and after any ingest. It reports:

@@ -138,6 +138,37 @@ tasks:
       - "the promotion bar TOOL-002 defines is stated, and this check is measured against it"
       - "the check has been right on a package that did not come from the template that prompted it"
       - "promoting it does not turn any existing package's warnings into errors unexamined"
+      - "template-comment is scoped to prose, or it is promoted separately from unfilled-placeholder"
+    workLog:
+      - at: 2026-07-30
+        note: |
+          The two halves of C11 do not share the scoping the code comment above them claims for
+          both. `unfilled-placeholder` strips fences and code spans before matching;
+          `template-comment` tests the raw file. So an HTML comment marker inside a fence fires
+          it, and any document that explains the check trips it — which happened while writing
+          the check into procedures/lint.md, and is why that row now describes the marker in
+          words instead of showing it.
+
+          This bears directly on the third criterion. Promoted as it stands, `template-comment`
+          turns every document that documents it into an error, starting with this repo's own
+          lint procedure. Recorded here rather than acted on: lint's implementation lives in
+          kd-nytka under 0009, so the fix is that repo's, and what belongs here is the rule it
+          has to satisfy — hence the fourth criterion.
+      - at: 2026-07-30
+        note: |
+          Fixed in kd-nytka the same day, as RT-012 there. Both halves of C11 now match against
+          the same code-stripped prose, so a document that shows the marker inside a fence or a
+          code span reports nothing, and the row in procedures/lint.md shows it again rather
+          than describing it in words — the entry above is superseded on that point.
+
+          The fourth criterion's first branch is closed: `template-comment` IS scoped to prose,
+          so it no longer has to be promoted separately. A freshly scaffolded package still
+          reports it, asserted there against the real templates rather than a fixture.
+
+          This does not promote anything and does not unblock this task. Both levels are still
+          `warn`, TOOL-002 still owns the bar, and being correctly scoped is not the same as
+          having been right somewhere nobody predicted — which is what rule 3 asks for. What is
+          removed is the reason the check could not have been promoted even once the bar exists.
     created: 2026-07-30
     updated: 2026-07-30
 
@@ -321,12 +352,17 @@ tasks:
       - "fixtures cover evidence, workLog, block scalars and wrapped values"
       - "`task list --status todo` filters, in both the space and equals forms"
     evidence:
-      - "tools/nytka.mjs: values fold continuation lines; unparsed content and trailing lines raise"
-      - "every task in this file is returned — 7 of 7 (2026-07-30). The same bug was dropping tasks
-         from the tools repo's registry too; the count there is not this repo's to publish"
+      - "tools/nytka-yaml.mjs: values fold continuation lines; unparsed content and trailing lines
+         raise. The fix landed in tools/nytka.mjs and moved here later the same day under 0010,
+         when lint and the task commands stopped carrying a parser each"
+      - "every task in this file is returned — 7 of 7 when this closed, 9 of 9 re-checked after two
+         tasks were added (2026-07-30). The same bug was dropping tasks from the tools repo's
+         registry too; the count there is not this repo's to publish"
       - "ids, statuses and titles match a spec-compliant parser on both registries"
       - "all 39 frontmatter and yaml blocks across both repos parse — no false positives from the new errors"
-      - "tools/nytka.test.mjs: 22 tests, including the whole-file count and the symlink main-guard"
+      - "22 tests, including the whole-file count and the symlink main-guard. They live with the
+         source in the tools repo and are not readable from here — tools/nytka.test.mjs was
+         committed here on 2026-07-30 and removed the same day under 0010"
       - "the main-guard was wrong the same way the tools repo had already recorded for its own bins — through a symlink the CLI printed nothing, exit 0; now realpathSync"
     created: 2026-07-30
     updated: 2026-07-30

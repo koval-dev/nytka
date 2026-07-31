@@ -29,15 +29,27 @@ Exit code `1` if any error-level finding exists, `0` otherwise. Zero dependencie
 | `decision-graph` | error | `supersedes` with no matching `superseded_by`, or a dangling number |
 | `dataset` | error | a dataset past `validUntil` still marked `current` |
 | `missing-type` | error | a document outside the vocabulary |
+| `missing-frontmatter` | warn | a document with no frontmatter block at all |
 | `unverified` | warn | a `stated` fact or cited source with no `verified` entry |
 | `decision-unconfirmed` | warn | a `stable` Decision no human has verified |
 | `dangling-link` | warn | a relative link to a file that does not exist |
 | `current-state` | warn | newest date in `current-state.md` older than 30 days |
 | `unknown-status` / `unknown-confidence` | warn | value outside the enum |
+| `unfilled-placeholder` | warn | an angle-bracket `<placeholder>` left in prose — scaffolded, never filled in |
+| `template-comment` | warn | a `<!-- ... -->` template instruction left in prose — scaffolded, never written |
 | `orphan` | info | nothing links to the document |
 
 Unknown values are warnings, never errors — SPEC §13 forbids rejecting a package over
 vocabulary it does not recognise.
+
+Both are scoped to prose: angle brackets and comment markers inside a code span or fence are how
+this repo and the templates document their own formats, and a check that flagged those would be
+muted inside a week — a muted check still reads as coverage. `template-comment` used to read the
+raw file instead, so any document explaining the check tripped it and the row above had to
+describe the marker in words rather than show it; the two halves now share one stripped view of
+the prose. Both report at `warn`, because a check earns `error` by having been right in practice
+rather than by its author being confident — promoting them is
+[TOOL-006](../tasks/tasks.yaml).
 
 ---
 

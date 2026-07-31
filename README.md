@@ -23,7 +23,7 @@ and manage this project according to it.
 ## Two ways to use it
 
 **Read it and install nothing.** Everything in this repo — the spec, the templates, the
-procedures, the lint script — is meant to be read and copied. Your agent is the runtime.
+procedures, the scripts in `tools/` — is meant to be read and copied. Your agent is the runtime.
 
 **Or install the packages.** `@nytka/cli` gives you `nytka` as a command, and `@nytka/plugin-*`
 are connectors that collect real data into a project's `datasets/`. **The packages are public on
@@ -31,7 +31,7 @@ npm; their source repo is private.** They are built separately so this repo stay
 nothing installed — you never need their source to use either lane.
 
 ```
-npx @nytka/cli lint .        # same checks as tools/nytka-lint.mjs, nothing to clone
+npx @nytka/cli lint .        # the released build of tools/nytka-lint.mjs, nothing to clone
 npx @nytka/cli add plugin-gsc
 ```
 
@@ -113,15 +113,23 @@ query loads the narrowest level that answers a question; lint checks what rotted
 
 ```
 node tools/nytka-lint.mjs /path/to/project     # committed here, nothing to install
-npx @nytka/cli lint /path/to/project           # same checks, nothing to clone
+node tools/nytka.mjs status                    # and the backlog commands, on the same terms
+npx @nytka/cli lint /path/to/project           # the same source, from the registry
 ```
 
 Zero dependencies. Checks expiry dates, unverified external claims, decision-graph
-consistency, dangling links, missing `type`, and staleness of `current-state.md`.
+consistency, dangling links, missing `type`, staleness of `current-state.md`, and template
+placeholders nobody filled in.
 
-Both run the same checks, because they are the same code: `tools/nytka-lint.mjs` is a
-generated read-only copy of the source in `@nytka/cli`, regenerated on release and drift-tested.
-Do not edit it here.
+`tools/` is four generated read-only copies of source that lives in `@nytka/cli` — regenerated
+on release and drift-tested. Do not edit them here, and **copy the directory rather than one
+file out of it**: they import each other by relative path, which needs no `node_modules` but
+does need its siblings.
+
+Between releases the committed copies can be *ahead* of the published package, and today they
+are — `node tools/nytka-lint.mjs` and `npx @nytka/cli lint` currently disagree on the same
+directory. Same source, two release schedules. [current-state.md](current-state.md) says what
+the gap is and when it closes.
 
 Lint is the operation most projects skip and the one that pays. Nearly every knowledge
 failure in a real project is something it would have flagged.
