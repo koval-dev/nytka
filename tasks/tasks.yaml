@@ -63,7 +63,7 @@ tasks:
 
   - id: ADOPT-001
     title: "Adopt nytka on a second project with a different shape"
-    status: todo
+    status: in_progress
     priority: high
     owner: mike
     blockedBy: []
@@ -75,8 +75,29 @@ tasks:
     acceptanceCriteria:
       - "the second project has project.yaml + AGENTS.md and passes lint with zero errors"
       - "every vocabulary field left unfilled without prompting is listed in unresolved.md"
+    workLog:
+      - at: 2026-07-30
+        note: |
+          Moved to in_progress. It had been sitting at `todo` while two adoptions already
+          existed — `stonewizards/com` and `kd-agency` — which is this repo's recurring failure
+          of a backlog nothing reconciles.
+
+          `stonewizards/com` is the contrast this task wanted: reporting-heavy, with datasets/,
+          tracking/, campaigns/, research/ and ad-copy/ in real use. First criterion is met on
+          paper — project.yaml + AGENTS.md, 0 errors on 2026-07-30 — but read that number
+          carefully. It was 2 errors that morning, and reached 0 because `unfilled-placeholder`
+          was demoted to `warn` the same day, not because anything in the package was fixed.
+          Both safety-rule placeholders are still unfilled: nobody has said which external
+          system needs confirmation before a write, or what the client owns.
+
+          Second criterion untouched. Neither adoption has had its unfilled vocabulary fields
+          collected into unresolved.md, which is the part of this task with actual findings in
+          it — and the reason to finish it rather than close it.
+
+          Also worth recording: neither project is a git repository. An adoption that cannot be
+          diffed cannot show which claims drifted, so both are weaker evidence than they look.
     created: 2026-07-27
-    updated: 2026-07-27
+    updated: 2026-07-30
 
   - id: SPEC-001
     title: "Decide whether stale_after should be required"
@@ -92,6 +113,33 @@ tasks:
       - "a decision record exists, or the question is closed in unresolved.md with a reason"
     created: 2026-07-27
     updated: 2026-07-27
+
+  - id: TOOL-006
+    title: "Promote unfilled-placeholder to error once it has earned it"
+    status: blocked
+    priority: low
+    owner: mike
+    blockedBy: [TOOL-002]
+    context: |
+      C11 (`unfilled-placeholder`, `template-comment`) shipped 2026-07-30 in kd-nytka and
+      currently reports at `warn`. It went out at `error` and was demoted the same day under
+      TOOL-002 rule 3 — a new check enters as info or warn and is promoted only after it has
+      been right in practice.
+
+      It has evidence, but not the kind that counts yet: it fired correctly on
+      `stonewizards/com` and `kd-agency`, with zero false positives against the templates' own
+      format documentation, which is the failure mode that would have made it noise. Both
+      packages came from the same template, so that is one observation rather than two.
+
+      Blocked on TOOL-002 rather than on a date, because the promotion bar is exactly what
+      TOOL-002 has to define. Promoting on a hunch is what rule 3 exists to stop, and doing it
+      before the rule is written would repeat the mistake that created this task.
+    acceptanceCriteria:
+      - "the promotion bar TOOL-002 defines is stated, and this check is measured against it"
+      - "the check has been right on a package that did not come from the template that prompted it"
+      - "promoting it does not turn any existing package's warnings into errors unexamined"
+    created: 2026-07-30
+    updated: 2026-07-30
 
   - id: TOOL-001
     title: "Add a worked project-specific lint check to the docs"
@@ -112,7 +160,7 @@ tasks:
   - id: TOOL-002
     title: "Write down the rules for adding a lint check"
     status: todo
-    priority: medium
+    priority: high
     owner: mike
     blockedBy: []
     context: |
@@ -154,6 +202,20 @@ tasks:
         note: |
           Second criterion met — the sentence was removed when AGENTS.md was rewritten for
           0009. The four rules are what is left.
+      - at: 2026-07-30
+        note: |
+          Raised to high, because the cost stopped being hypothetical. A new check
+          (`unfilled-placeholder`, C11) was added in kd-nytka and shipped at `error`, which
+          rule 3 forbids — nobody adding it could read a rule that lives only in this task's
+          context. Demoted to `warn` the same day once the rule was found. That is the exact
+          failure this task predicts: the table is copyable, the principle is not, so the
+          principle gets re-derived or skipped.
+
+          Rule 3 also turns out to be underspecified in a way worth fixing while writing it
+          down. It says a check is promoted "after it has been right in practice" and does not
+          say what counts. C11 was right on two packages, but both were scaffolded from one
+          template, so it is one observation wearing two hats. Whatever "right in practice"
+          means, it has to exclude that.
     created: 2026-07-29
     updated: 2026-07-30
 

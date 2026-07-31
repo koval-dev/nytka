@@ -368,7 +368,8 @@ Installed, the same checks are `nytka lint <dir>`.
 The placeholder check is scoped to prose: angle brackets inside a code span or fence are how
 this spec and the templates document their own formats, and are never findings. That
 distinction is load-bearing — a check that flagged both would be muted, and a muted check
-still reads as coverage.
+still reads as coverage. It reports at `warn`, because a check earns `error` by having been
+right in practice rather than by its author being confident.
 
 ---
 

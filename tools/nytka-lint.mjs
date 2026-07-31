@@ -272,6 +272,12 @@ export function lintProject (dir = '.', { today = isoDate() } = {}) {
   // documenting a format looks like; every genuine blank sits in prose. Strip code first and
   // the two stop being the same string. A check that flagged both would be muted within a
   // week, and a muted check is worse than no check — it still reads as coverage.
+  //
+  // Both levels are warn, including `unfilled-placeholder`, which shipped as an error and was
+  // demoted the same day. ../nytka TOOL-002 rule 3: a new check enters as info or warn and is
+  // promoted only after it has been right in practice. Being right on the two projects that
+  // prompted it is not that — they came from one template, so it is one observation, not two.
+  // Promote when it has been right somewhere nobody predicted.
   for (const [rel, { text }] of docs) {
     if (basename(rel) === 'README.md') continue     // the template READMEs *are* the format docs
     const prose = text
@@ -280,7 +286,7 @@ export function lintProject (dir = '.', { today = isoDate() } = {}) {
       .replace(/`[^`\n]*`/g, '')
     for (const m of new Set(prose.match(/<[A-Za-z][A-Za-z0-9 _-]*>/g) ?? [])) {
       if (HTML_TAGS.has(m.slice(1, -1).toLowerCase())) continue
-      add('error', 'unfilled-placeholder', rel, `\`${m}\` is a template placeholder — fill it in or delete the line`)
+      add('warn', 'unfilled-placeholder', rel, `\`${m}\` is a template placeholder — fill it in or delete the line`)
     }
     if (text.includes('<!--')) {
       add('warn', 'template-comment', rel, 'template instructions (`<!-- ... -->`) still present — scaffolded but not written')

@@ -65,12 +65,13 @@ decided where lint's source lives. Both lanes run the same conformance code.
   finished one — `init` closed by *printing advice*, and lint had no opinion. Fixed in three
   places: the line has no parameter left in it (`nytka lint .`), `nytka init` derives the
   `AGENTS.md` title and `project.yaml → id` from the directory name and lints what it wrote, and
-  lint gained `unfilled-placeholder` (error) and `template-comment` (warn). The check is scoped
+  lint gained `unfilled-placeholder` and `template-comment`, both **warn**. The check is scoped
   to prose: angle brackets inside a code span or fence are how the templates document their own
   formats, and a check that flagged those would be muted within a week. Publishing is now gated
   on the vendor drift check via `prepublishOnly`, which was previously a thing to remember.
-  **Behaviour change** — a package carrying template residue now fails lint, which is why both
-  projects that had it did.
+  `unfilled-placeholder` shipped as an `error` and was demoted the same day: TOOL-002 rule 3
+  says a new check enters as info or warn, and being right on the two projects that prompted it
+  is one observation rather than two, since both came from the same template.
 
 - **2026-07-30** — **the backlog was reconciled, and the gap that let it rot was closed.** The
   task for publishing this repo still read *"the repo exists but is private"* a day after the
@@ -190,7 +191,7 @@ None.
 | Lint reads `tasks/tasks.yaml` | **no** | 2026-07-30 | source — 0 occurrences of "tasks" |
 | Adopters in production | 1 project + 1 tooling line (8 published packages) | 2026-07-29 | npm registry |
 | Lint runs clean on itself | yes | 2026-07-30 | `node tools/nytka-lint.mjs .` |
-| A freshly scaffolded package fails lint until filled in | yes — 3 errors, 4 warnings | 2026-07-30 | `nytka init` into a temp dir |
+| A freshly scaffolded package reports its own blanks | yes — 0 errors, 7 warnings | 2026-07-30 | `nytka init` into a temp dir |
 | Lint dependencies | 0 | 2026-07-27 | source |
 | `tools/nytka-lint.mjs` is a generated copy | yes — regenerated 2026-07-30, so it is **ahead of published 0.3.1** until the next release | 2026-07-30 | file header + `npm run vendor` |
 | `npx @nytka/cli lint` runs the same checks | yes | 2026-07-29 | run against this repo from the registry |

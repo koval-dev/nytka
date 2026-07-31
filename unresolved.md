@@ -186,6 +186,35 @@ relevant files, reconsider. Below that, a directory listing is the index.
 
 ---
 
+## How does a template change reach a package that already exists?
+
+**Status:** open
+
+Scaffolding is solved and upgrading is not. `nytka init` refuses to touch a file that already
+exists — correctly, since `AGENTS.md` is the most heavily authored file in a package and a
+scaffolder that overwrote it would destroy the work worth keeping. So the command that knows
+the current template is structurally unable to apply it, and there is no second command that
+can. `nytka upgrade` rewrites `@nytka/*` ranges in a `package.json`, which most nytka packages
+do not have.
+
+This is not hypothetical. `<path-to-nytka>` shipped in `templates/project/AGENTS.md`, reached
+two packages, and was fixed in each by hand — the template fix reached neither. Nothing in the
+format records which template version a package came from, so nothing can tell a package that
+predates a change from one that deliberately diverged. Those are different situations and they
+look identical on disk.
+
+**Working rule:** lint carries the weight. `unfilled-placeholder` and `template-comment` make
+stale scaffolding visible in packages that already exist, which is the cheap 80% — a package
+says what it is missing even though nothing can fix it for you. Template changes are applied by
+hand, and the fact that two packages needed the same hand-edit is the cost being paid.
+
+**Decision trigger:** the third package needing the same hand-edit, or the first template change
+that cannot reasonably be applied by hand — a moved directory, a renamed required file. Either
+means the format needs a provenance field naming the template version a package came from,
+before it needs a migration command.
+
+---
+
 ## How does nytka handle multiple projects?
 
 **Status:** open
