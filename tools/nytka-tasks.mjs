@@ -44,6 +44,17 @@ class TaskUsageError extends Error {
   constructor () { super('usage'); this.name = 'TaskUsageError'; this.exitCode = 2 }
 }
 
+/**
+ * Thrown when the project declares a tracker these commands cannot read. Like TaskUsageError,
+ * the message is already printed by the time this is thrown.
+ */
+class TrackerUnsupportedError extends Error {
+  constructor (tracker) {
+    super(`tracker: ${tracker}`)
+    this.name = 'TrackerUnsupportedError'; this.exitCode = 2; this.tracker = tracker
+  }
+}
+
 /** templates/project, next to src/ in the package and next to the file when vendored. */
 function templatesDir () {
   const here = dirname(fileURLToPath(import.meta.url))
@@ -125,13 +136,72 @@ export function runTaskCommand (argv = [], { cwd = process.cwd(), today = isoDat
 
   const loadProject = () => parseYaml(readFileSync(join(requireRoot(), 'project.yaml'), 'utf8'), 'project.yaml')
 
-  function tasksPath () {
+  /**
+   * The registry these commands read, and what the project says owns the status in it.
+   *
+   * `tracker` is absent from most project.yaml files and defaults to `file` — that is the
+   * default ../nytka/SPEC.md §4 documents, and every project written before this guard existed
+   * relies on it.
+   */
+  function taskSource () {
     const p = loadProject()
-    const rel = p?.tasks?.registry ?? 'tasks/tasks.yaml'
-    return join(ROOT, rel)
+    return {
+      tracker: String(p?.tasks?.tracker ?? 'file'),
+      file: join(ROOT, String(p?.tasks?.registry ?? 'tasks/tasks.yaml')),
+    }
+  }
+
+  const tasksPath = () => taskSource().file
+
+  /**
+   * Refuse to treat a registry as the backlog when the project says something else owns it.
+   *
+   * §8: on an external tracker the issues own status, the repo holds a GENERATED read-only
+   * snapshot, and sync runs tracker → file only, never the reverse. These commands read a
+   * registry and five of them write to it, so on any tracker but `file` both halves are wrong.
+   * What they would read is a copy; what they would write is a second writable copy of a status
+   * the tracker owns, which is P2's named failure and the thing this format exists to prevent.
+   *
+   * lint has read `tasks.tracker` since C12 and skips its task checks when it is not `file`.
+   * These commands never read it. So a project declaring `github-projects` got `nytka status`
+   * printing the registry as though it were the backlog, `nytka next` handing an agent work off
+   * it, and `nytka task done` writing status into it — every one of them exiting 0. Wrong,
+   * believable and exit 0 is this file's recurring failure (../nytka TOOL-005), and it is why
+   * this refuses rather than printing an empty pane: an empty pane is the same lie, shorter.
+   *
+   * Refusing is the whole fix, deliberately. Reading a snapshot is not implemented and is not
+   * this guard's to add — nytka ships no tracker integration (../nytka decisions/0004) and the
+   * snapshot §4 names is `tasks/snapshot.md`, markdown these commands cannot parse. RT-003 is
+   * where a reader would come from, and it has to decide the direction of authority first.
+   *
+   * Every value that is not `file` refuses, including one §4 does not list. A typo leaves
+   * nothing able to say which file is authoritative, and the message names the value it read —
+   * so a misspelled tracker is visible in the refusal rather than hidden by a fallback.
+   */
+  function requireFileTracker () {
+    const { tracker, file } = taskSource()
+    if (tracker === 'file') return
+    const rel = relative(ROOT, file)
+    for (const line of [
+      '',
+      `nytka: this project declares  tasks.tracker: ${tracker}`,
+      '',
+      '       The task commands read a registry file. On an external tracker that file is not',
+      '       authoritative: the tracker owns status and the repo holds a generated read-only',
+      `       snapshot (SPEC §8). Reading ${rel} here would report a copy as the backlog,`,
+      '       and writing to it would make a second writable copy of a status the tracker owns.',
+      '',
+      `       nytka ships no reader for ${tracker}. Until it does:`,
+      '         · read the backlog in the tracker itself',
+      `         · or set  tasks.tracker: file  in project.yaml, if ${rel} really is where`,
+      '           status is written',
+      '',
+    ]) console.error(line)
+    throw new TrackerUnsupportedError(tracker)
   }
 
   function loadTasks () {
+    requireFileTracker()
     const file = tasksPath()
     if (!existsSync(file)) return { file, doc: { tasks: [] }, list: [] }
     const doc = parseYaml(readFileSync(file, 'utf8'), relative(ROOT, file))
@@ -1023,7 +1093,7 @@ export function runTaskCommand (argv = [], { cwd = process.cwd(), today = isoDat
         return 2
     }
   } catch (err) {
-    if (err instanceof TaskUsageError) return 2
+    if (err instanceof TaskUsageError || err instanceof TrackerUnsupportedError) return 2
     // A parse failure must stop the command. Printing a partial backlog as if it were whole is
     // the one outcome this tool must never produce.
     console.error(`\nnytka: ${err.message}\n`)
