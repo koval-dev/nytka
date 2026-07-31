@@ -109,9 +109,10 @@ Three operations keep a package honest — [ingest](procedures/ingest.md),
 query, and [lint](procedures/lint.md). Ingest distils new material in;
 query loads the narrowest level that answers a question; lint checks what rotted.
 
-A fourth workflow governs the one resource none of them can replace:
-[ask-the-owner](procedures/ask-the-owner.md) is when an agent may interrupt a human, and the
-shape a question has to take to be answerable without opening a file.
+Two more govern the resource none of them can replace — a person's attention.
+[work-a-task](procedures/work-a-task.md) is the daily loop from picking work up to handing it
+back, executable with nothing installed. [ask-the-owner](procedures/ask-the-owner.md) is when an
+agent may interrupt a human, and the shape a question or a report has to take to be worth reading.
 
 ## Lint
 

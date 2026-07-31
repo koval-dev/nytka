@@ -32,10 +32,18 @@ decided where lint's source lives. Both lanes run the same conformance code.
 
 ## Active work
 
+- **The daily loop is written** — [work-a-task.md](procedures/work-a-task.md), 2026-07-31, in
+  `review`. Ten steps from reading the state to handing work back, every one a file edit with the
+  commands shown only as accelerators. Its three additions to the loop as previously described are
+  the ones with scars behind them: check a task's context is still true *before* working from it,
+  verify against the thing rather than a report of it, and hand back to `review` rather than
+  closing your own work.
 - **PROC-001** — the procedure for when an agent may spend a human's attention,
   [ask-the-owner](procedures/ask-the-owner.md). Written 2026-07-31 and in `review`. It is the
   first procedure here about the format's *users* rather than its files, and it exists because
-  the owner said the output had stopped being for humans.
+  the owner said the output had stopped being for humans. It gained a step on **reporting** the
+  same day, after the session that wrote it broke it in the next message — it governed questions
+  and said nothing about status reports, which are most of what an owner reads.
 - **ADOPT-001** — still the thing that matters most, and still `in_progress`. A second adopter
   with a different shape is what would tell us which parts of v0.1 generalise. It now also gates
   **TOOL-006**, because promoting the placeholder check would turn two live adoptions red on

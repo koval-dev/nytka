@@ -99,6 +99,33 @@ checking as well as the deciding, which is both jobs.
 
 ---
 
+---
+
+## Step 4 — reporting, which is not a question and costs the same
+
+A status report asks for nothing and consumes exactly the attention a question does. It obeys
+the same rules, plus two of its own.
+
+1. **Lead with the answer.** What is true now, and what it means. The investigation that produced
+   it goes in the `workLog`, where it is retrievable and is not being read by someone who only
+   wanted the conclusion.
+2. **End with what happens next, and when.** A report with no next action delegates back the one
+   thing the reader was hoping had been worked out. "Two things are blocked" is a fact; "I'll do
+   X next, and Y needs a decision from you before Thursday" is a report.
+3. **An identifier is not a noun.** `TOOL-006` names nothing to anyone who has not opened the
+   registry — and the reader is being asked to look up a word before they can parse the sentence
+   containing it. Write what the thing *is*: *"promoting the placeholder check"*. If the ID is
+   needed to act on it, put it after the plain-language name, not instead of it.
+4. **Length is a cost, not a demonstration of rigour.** If the report is longer than the decision
+   it supports, it is spending more than it delivers. Thoroughness belongs in the record; the
+   report is the index to it.
+
+The test: **someone who read nothing else should finish the report knowing what happened, what it
+means, and what happens next.** If they finish it knowing only what was done, it was a work log
+posted to the wrong place.
+
+---
+
 ## Approval points
 
 The owner, and only the owner:
@@ -125,9 +152,15 @@ An agent may draft all four. It may commit none of them.
 | Work handed back as "is this ok?" | No verdict offered — see step 3. |
 | The owner is annoyed rather than answering | Volume. The filter is not being run at all. |
 | A long answer whose decision is in the last paragraph | The stakes were buried under the investigation. `workLog` is where investigation goes. |
+| The report is a list of identifiers | Step 4.3. The reader is being asked to do lookups before they can read the sentence. |
+| The report ends without a next action | Step 4.2. Whatever it was reporting, the reader now has to work out what to do about it. |
+| The report is longer than the work it describes | Step 4.4. |
 
-The last three are the ones this procedure was written from, on 2026-07-31, when the owner's
-words for it were that the output was "not for humans".
+The last six are the ones this procedure was written from, on 2026-07-31 — the first three when
+the owner said the output was "not for humans", and the last three the same day, when the session
+that wrote this procedure immediately broke it in its next message. That is the ordinary case
+rather than an embarrassing one: a rule that is only ever applied to questions leaves reports
+untouched, and reports are most of what an owner actually reads.
 
 ---
 

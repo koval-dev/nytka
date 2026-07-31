@@ -8,8 +8,18 @@ generated: { by: claude-opus-5, at: 2026-07-27 }
 
 # Procedure — ingest
 
-**Trigger:** new material arrives that contains knowledge worth keeping — a long agent
-session, a client call, a research dump, a handover.
+**Triggers — two, and the second is the one that gets missed:**
+
+1. New material arrives that contains knowledge worth keeping — a long agent session, a client
+   call, a research dump, a handover.
+2. **A task finishes.** Step 9 of [work-a-task.md](work-a-task.md) sends you here. A task record
+   is where findings are *produced*, not where they live: a rule that stays in a `context` or
+   `workLog` field is invisible to everyone who was not working that task. That has already cost
+   this repo once — the rules for adding a lint check existed only inside the context of the task
+   asking for them to be written down somewhere else.
+
+Classification is the same either way. Use the table below; the difference is only what you are
+reading from.
 
 **Ingest is repeatable, not a one-time migration.** The first ingest of an existing project
 is `adopt-existing.md`; every one after is this.

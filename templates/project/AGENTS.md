@@ -19,6 +19,10 @@ Format: https://github.com/koval-dev/nytka
 Do **not** auto-scan: `research/`, `history/`, `datasets/` payloads, archive folders.
 Load those only when a task points at them.
 
+**The loop itself is `nytka/procedures/work-a-task.md`** — read the state, pick one task, check
+its context is still true, work, hand it back for review. Every step is a file edit; nothing
+needs installing beyond the linter.
+
 <!-- The exclusions matter more than the order. An agent that reads everything
      every session burns its context on knowledge it does not need. -->
 
