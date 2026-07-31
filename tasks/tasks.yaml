@@ -586,3 +586,72 @@ tasks:
       - "npm: @nytka/cli 0.4.0 ships templates/project without private/; 0.4.1 ships it with"
     created: 2026-07-30
     updated: 2026-07-30
+
+  - id: PROC-001
+    title: "Write the procedure for when an agent may spend a human's attention"
+    status: review
+    priority: high
+    owner: mike
+    acceptedBy: human:mike
+    blockedBy: []
+    context: |
+      Requested by the owner on 2026-07-31, in these words: the project felt like "a million
+      questions and no algorithm how to find answer", questions arriving "from areas that maybe
+      not so important", and answers arriving as "several pages of text with reference to ticket
+      numbers — it is not for humans".
+
+      Two failures, and only the second is the one people try to fix. The first is volume: an
+      agent asks questions it could have answered from `SPEC.md` or decided itself under P6. The
+      second is shape: when a question is worth asking, it arrives citing a task ID, with no
+      costs attached to the options, and with the decision buried under the investigation.
+
+      The structural cause is an asymmetry, not a wording habit. An agent accumulates context all
+      session and the owner does not, so every question is asked from a position of much more
+      context than the person answering has. That is what "losing control" is: being asked to
+      arbitrate details whose origin you never saw. The remedy is that a question must rebuild
+      its own context in one sentence, and must arrive BEFORE the work rather than after — a
+      question raised once a day's work depends on it is an approval request wearing a question
+      mark.
+
+      This is a procedure and not a spec section. §7's bar is a workflow done twice that went
+      wrong the same way both times, and the failure-conditions table is where the value sits;
+      the bottom three rows of it are this repo's own, dated. A lint check was considered and
+      rejected for now: lint checks form and never truth, so it could catch a malformed question
+      but never an unnecessary one — which is the actual complaint. Rule 3 of
+      decisions/0008 is the escape hatch if a checkable half emerges later.
+
+      The anchor that makes it nytka's procedure rather than generic advice: the format already
+      names exactly three points where a human is structurally required — `acceptedBy` leaving
+      `proposed`, criteria checked leaving `review`, and a decision when an `unresolved.md`
+      trigger fires. A question mapping to none of the three is almost always already answered
+      or cheap enough to decide.
+    acceptanceCriteria:
+      - "a procedure exists stating when an agent may interrupt a human, in SPEC §7's shape"
+      - "it carries a failure-conditions table drawn from what actually went wrong here, not from hypotheticals"
+      - "it covers handing back finished work, not only asking questions"
+      - "an agent starting cold in a scaffolded project reads the rule without being told to"
+      - "it says what to do with a question that cannot be answered yet, rather than leaving that to block"
+      - "node tools/nytka-lint.mjs . passes with zero errors"
+    workLog:
+      - at: 2026-07-31
+        note: |
+          Written as `procedures/ask-the-owner.md`. Three-test filter, the shape a passing
+          question takes, the review handback, and a nine-row failure table.
+
+          Criterion 4 is the one that needed a decision rather than prose. The procedure lives in
+          this repo, which is referenced and not installed, so a scaffolded project would never
+          see it by default. Resolved by putting the short form directly in
+          `templates/project/AGENTS.md` — the file every new project gets and every agent reads
+          without being pointed at it — with the full procedure linked for the case it does not
+          cover. Both repos' own AGENTS.md got the same treatment.
+
+          Criterion 5 is P6 rather than anything new: a question that cannot be answered yet is
+          not asked and does not block. It goes to `unresolved.md` with a working rule so work
+          continues and a trigger that names what will schedule the decision. Stating it in the
+          filter matters because parking is the branch agents skip — they either ask or stall.
+
+          `review` rather than `done`: this procedure's own step 3 forbids the author of the work
+          from also declaring it met, and `completionSummary`/`evidence` are absent deliberately —
+          §8 requires them to enter `done`, not `review`.
+    created: 2026-07-31
+    updated: 2026-07-31

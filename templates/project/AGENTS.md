@@ -39,6 +39,23 @@ Load those only when a task points at them.
 - Confirm before any write to <external system>.
 - Never modify <thing the client owns> without per-item confirmation.
 
+## Asking a human
+
+Before spending anyone's attention, three tests — the question has to fail all three to be
+worth asking. Is it already answered in `SPEC.md`, `decisions/` or this file? Is it cheap and
+reversible, so you can choose, record the choice and continue? Does it actually spend money, a
+public name, a constraint on future work, or a judgment only the owner can make?
+
+When one passes: the stakes in one sentence with no task IDs, options that each name what they
+cost, a recommendation with its reason, nothing else. One question at a time. Ask before doing
+the work, not after — afterwards it is an approval request, not a question.
+
+Handing back a `review` task follows the same rule: per acceptance criterion, how it was checked
+or why it was not, then the one thing most likely to be wrong. Never "let me know if this is ok".
+
+Full procedure, including what to do with a question that cannot be answered yet:
+`nytka/procedures/ask-the-owner.md`.
+
 ## Task state
 
 Tracker mode is declared in `project.yaml → tasks.tracker`.

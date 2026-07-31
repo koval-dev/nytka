@@ -94,6 +94,19 @@ annoying to follow here, that is a bug report about the rule, not an exception t
 When something in the spec turns out to be impractical, record it in `unresolved.md` or
 supersede the decision — do not quietly stop following it in this repo.
 
+## Asking the owner anything
+
+**Run the filter in [procedures/ask-the-owner.md](procedures/ask-the-owner.md) before spending
+the owner's attention.** Three tests: is it already answered here, is it cheap and reversible,
+and what does it actually spend. A question has to fail all three to be worth asking.
+
+When one does pass: the stakes in one sentence with no task IDs, options that each name what
+they cost, a recommendation with its reason, and nothing else. One question at a time. Ask
+before the work, not after — a question raised once the work is built is an approval request.
+
+The same applies to handing back a `review` task: per criterion, how it was checked or why it
+was not, then the one thing most likely to be wrong.
+
 ## Changing the format
 
 Any change to the frontmatter vocabulary, directory contract or conformance rules is a
