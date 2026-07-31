@@ -330,7 +330,7 @@ export function lintProject (dir = '.', { today = isoDate() } = {}) {
   // is the case this check was written for and the one the tests pin.
   //
   // Both levels are warn, including `unfilled-placeholder`, which shipped as an error and was
-  // demoted the same day. ../nytka TOOL-002 rule 3: a new check enters as info or warn and is
+  // demoted the same day. ../nytka decisions/0008 rule 3: a new check enters as info or warn and is
   // promoted only after it has been right in practice. Being right on the two projects that
   // prompted it is not that — they came from one template, so it is one observation, not two.
   // Promote when it has been right somewhere nobody predicted.
@@ -354,7 +354,7 @@ export function lintProject (dir = '.', { today = isoDate() } = {}) {
   // The first checks that open tasks.yaml at all. Until now lint read markdown frontmatter and
   // nothing else, so a backlog could say anything and a clean run said nothing about it.
   //
-  // Read what the project declares (../nytka TOOL-002 rule 4): a project on an external tracker
+  // Read what the project declares (../nytka decisions/0008 rule 4): a project on an external tracker
   // owns status there and keeps a GENERATED snapshot here, so checking the snapshot would report
   // the tracker's state as this repo's defect. No registry, or a tracker that is not `file`, and
   // these checks are skipped rather than guessed at.

@@ -48,20 +48,21 @@ vocabulary it does not recognise.
 
 The last four read `tasks.yaml`, and only when `project.yaml` declares `tracker: file`. On an
 external tracker the registry here is a generated snapshot, so reporting it would blame this
-repo for the tracker's state — rule 4 below.
+repo for the tracker's state — [0008](../decisions/0008-lint-check-rules.md) rule 4.
 
 `task-status-alias` is capped at `info` by §8 itself: `todo` is a documented alias, not a
 defect. `task-blocked-consistency` is the one with a case for `error` eventually — a task
 claiming `blocked` with nothing blocking it contradicts itself, which is what an error means —
-but rule 3 governs entry, and its evidence so far is two catches in one registry, found by hand.
-That is one source, not two.
+but 0008 rule 3 governs entry, and its evidence so far is two catches in one registry, found by
+hand. That is one source, not two.
 
 Deliberately absent: the fields §8 requires to *enter* a state — `evidence` and
 `completionSummary` at `done`, `acceptedBy` after `proposed`, `reason` at `cancelled`. Those
 bind at the transition and are explicitly not retroactive, while lint sees only the state a task
 is in now. Without a record of when a project adopted the lifecycle, such a check cannot tell a
 task closed last year from one closed today, so it would fire on every correctly-closed task in
-every existing registry — which §8 names as how a spec teaches people to ignore it.
+every existing registry — which §8 names as how a spec teaches people to ignore it. That is
+0008 rule 5, and this is the check it was written from.
 
 Both are scoped to prose: angle brackets and comment markers inside a code span or fence are how
 this repo and the templates document their own formats, and a check that flagged those would be
@@ -71,6 +72,32 @@ describe the marker in words rather than show it; the two halves now share one s
 the prose. Both report at `warn`, because a check earns `error` by having been right in practice
 rather than by its author being confident — promoting them is
 [TOOL-006](../tasks/tasks.yaml).
+
+---
+
+## Adding a check
+
+**The rules are [0008](../decisions/0008-lint-check-rules.md). Read them before picking a level.**
+The table above is a record of levelling decisions, not a pattern to copy: three of its checks were
+levelled in the same week and no two for the same reason — one capped by §8 in words, one capped by
+§13's liberal conformance, one held at `warn` purely because its evidence is one source. Copying a
+neighbour's level gets you the right answer only by luck.
+
+The short form:
+
+1. A level is never a matter of taste. `error` = the package contradicts itself, contradicts the
+   calendar, or fails a §13 conformance requirement. Whatever clause you are enforcing may cap you
+   lower than that.
+2. Lint never requires configuration. Reading what the project *declares* is not configuration.
+3. A check enters at `info` or `warn`. `error` requires two correct findings from inputs that do
+   not share an origin, one of them from somewhere nobody predicted, no outstanding false positive
+   against the check *as it stands*, and nothing going red unexamined.
+4. Read what the project declares; skip silently what does not apply.
+5. Do not fire on work that was correct when it was done.
+
+Rule 3 is the one that gets skipped, and the one with a demotion behind it: the placeholder check
+shipped at `error` and came back to `warn` the same day, because being right on two packages
+scaffolded from one template is one observation wearing two hats.
 
 ---
 

@@ -239,8 +239,50 @@ tasks:
           `warn`, TOOL-002 still owns the bar, and being correctly scoped is not the same as
           having been right somewhere nobody predicted — which is what rule 3 asks for. What is
           removed is the reason the check could not have been promoted even once the bar exists.
+      - at: 2026-07-31
+        note: |
+          **The bar exists — [0008](../decisions/0008-lint-check-rules.md) rule 3 — and this
+          check does not clear it.** Two of four criteria met. Staying `blocked`.
+
+          Rule 3 asks for four things at promotion, measured against the check as it stands:
+          two correct findings from inputs that do not share an origin, one of them from
+          somewhere nobody predicted, no outstanding false positive, and nothing going red
+          unexamined. Against them:
+
+            1. *the bar is stated, and this check is measured against it* — **met**. That is
+               this entry, and it is the only criterion writing 0008 could close.
+            2. *right on a package that did not come from the template that prompted it* —
+               **not met**, and unchanged since this task was created. Still the same two
+               packages, still one template, still one observation. Running clean on this repo
+               and on a fresh scaffold is evidence about false positives and none about being
+               right: a check that has never fired outside its origin has one observation,
+               however many packages it has run clean on.
+            3. *promotion turns no existing warning into an error unexamined* — **not met**.
+               Both adoptions still carry unfilled safety-rule placeholders — nobody has said
+               which external system needs confirmation before a write, or what the client owns
+               (see ADOPT-001). Promoting today would turn two live packages red on findings
+               that are correct and that nobody has answered. Rule 3's fourth clause says those
+               get read first, not that they get promoted first.
+            4. *`template-comment` scoped to prose or promoted separately* — **met**
+               2026-07-30.
+
+          **And a fifth thing, which is the one that actually stops it.** Rule 3's third clause
+          counts false positives against the check *as it currently stands*, and there is a live
+          class: markdown lets a code span wrap across a newline, and the stripper's span pattern
+          excludes newlines, so a wrapped span survives stripping and its contents are read as
+          prose. A command example wrapped mid-span reports a placeholder that is not one.
+          Reproducible in three lines against `tools/nytka-lint.mjs`. Until that is fixed
+          upstream, the check is not promotable however many independent catches arrive — and
+          any catches collected before the fix are evidence about a different check.
+
+          **A note on why this stays `blocked` and what that costs.** TOOL-002 is at `review`, so
+          `blockedBy` is still unresolved and §8's rule holds. But the honest blocker is no longer
+          a task: it is a catch on a package nobody has scaffolded yet. `blockedBy` names tasks,
+          so when TOOL-002 closes this one has nothing to put there, and §8 will push it to
+          `ready` while it is not startable. Recorded in 0008's consequences as a gap in the
+          format rather than fixed here.
     created: 2026-07-30
-    updated: 2026-07-30
+    updated: 2026-07-31
 
   - id: TOOL-001
     title: "Add a worked project-specific lint check to the docs"
@@ -260,7 +302,7 @@ tasks:
 
   - id: TOOL-002
     title: "Write down the rules for adding a lint check"
-    status: ready
+    status: review
     priority: high
     owner: mike
     blockedBy: []
@@ -317,8 +359,69 @@ tasks:
           say what counts. C11 was right on two packages, but both were scaffolded from one
           template, so it is one observation wearing two hats. Whatever "right in practice"
           means, it has to exclude that.
+      - at: 2026-07-31
+        note: |
+          **All three criteria met. Moved to `review`, not `done`** — see the last paragraph.
+
+          The rules are decision [0008](../decisions/0008-lint-check-rules.md), `draft`. Home
+          chosen against who reads them and when: the person adding a check is standing in
+          procedures/lint.md looking at a table of levels, and the thing they need is the
+          reasoning that produced it. That argues for a numbered record rather than the
+          procedure itself, for two reasons. Lint's source and two procedures here already cite
+          "rule 3" and "rule 4" BY NUMBER, so the rules need a stable numbered home that
+          survives this task closing — and a decision is what this repo already uses for a
+          choice that constrains future work (SPEC §6). procedures/lint.md gains an "Adding a
+          check" section with the five rules in short form and the link.
+
+          Per criterion:
+
+            1. *recorded where 0003 is, or in AGENTS.md, and reachable from procedures/lint.md*
+               — **met**. decisions/0008 is where 0003 is. Reachable from procedures/lint.md in
+               three places, including a new section that exists to be found, plus
+               procedures/init-project.md and the decisions index.
+            2. *AGENTS.md no longer calls lint the conformance rules expressed as code* —
+               **met**, re-checked by grep rather than taken from the 2026-07-29 entry: the
+               phrase occurs nowhere in the repo.
+            3. *lint passes with zero errors* — **met**. 0 errors, 0 warnings, 0 info,
+               21 documents, 2026-07-31.
+
+          **Five rules, not four.** The fifth has two named instances and is not derivable from
+          the other four: a check must not fire on work that was correct when it was done. The
+          required-field checks (`evidence` and `completionSummary` at `done`) are the case —
+          correct by their own logic on every task they would flag, wrong under §8 on every one
+          of them, because those fields bind at the transition and closed tasks are not
+          backfilled. Rule 3 is about a check being right; rule 5 is about it being retroactive.
+
+          A sixth was weighed and folded in rather than added. The ceiling — that the clause
+          being enforced can cap a check below what rule 1 allows, as §8 does at `info` for the
+          alias check and §13 does below `error` for any unknown-value check — is a clause of
+          rule 1, because rule 1 is the rule that answers "what level?" and two rules answering
+          one question is P2. A time-in-service bar was considered for rule 3 and rejected: the
+          check that shipped wrong shipped wrong on evidence quality, not on youth.
+
+          **"Right in practice" is now four clauses**: two correct findings from inputs that do
+          not share an origin; one of them from somewhere nobody predicted; no outstanding false
+          positive, counted against the check as it stands and including any document that
+          reworded itself to get past it; and nothing going red unexamined. A clean run is
+          evidence for the third clause and for nothing else.
+
+          **Two findings that make something already written wrong, both recorded in 0008.**
+          §8 cites §10 for a procedure §10 did not state — §10 said a check earns `error` by
+          having been right in practice, about ONE check, and never that a check enters below
+          `error`. That is the same shape as the miscitation 0006 exists to fix, this time
+          inside the spec. §10 is amended to state the rule generally, which makes §8's existing
+          citation true; no link out, because SPEC.md has none. Separately, rule 1 as articulated
+          describes three of lint's five error checks: `required-file` and `missing-type` error
+          because §13 requires those things, not because anything contradicts itself. The rule
+          was applied for a week as though it covered all five. The code was right; the rule was
+          incomplete.
+
+          **Why `review` and not `done`.** Same reason as SPEC-002: 0006 added the state because
+          whoever did the work does not also get to declare it met, and all three criteria were
+          checked inside the session that did the work. `completionSummary` and `evidence` are
+          deliberately absent — §8 requires them to enter `done`, not `review`.
     created: 2026-07-29
-    updated: 2026-07-30
+    updated: 2026-07-31
 
   - id: SPEC-003
     title: "Settle what artifacts/ is, now that its decision trigger has fired"

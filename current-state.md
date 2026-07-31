@@ -39,14 +39,57 @@ decided where lint's source lives. Both lanes run the same conformance code.
   `review` and not `done` because the checking happened in the same session that finished the
   work, which is exactly what [0006](decisions/0006-task-lifecycle.md) added the state to
   prevent. A human closes it.
-- **TOOL-002** — write down the rules for adding a lint check. Now the larger half of what this
-  repo owes lint: the implementation moved out under 0009, the rules did not. Rule 4 also
-  unblocks the tasks.yaml checks in kd-nytka, which is the path to lint ever seeing the backlog.
+- **TOOL-002** — write down the rules for adding a lint check. **All three criteria met and it is
+  in `review`** as of 2026-07-31. The rules are [0008](decisions/0008-lint-check-rules.md)
+  (`draft`), reachable from `procedures/lint.md`. Rule 4 was the half the registry checks were
+  waiting on; lint has read `tasks.yaml` since 2026-07-31, written by reading rule 4 out of this
+  task's `context` field — which is the reachability defect rather than an exception to it.
+  `review` and not `done` for the same reason as SPEC-002: a human closes it.
 - **SPEC-003** — `proposed`, not accepted: settle what `artifacts/` is now that its trigger has
   fired. Agent-proposed on 2026-07-30 and awaiting a human, per §8's rule that nothing leaves
   `proposed` without one.
 
 ## Recent meaningful changes
+
+- **2026-07-31** — **the rules for adding a lint check left a task's `context` field and became
+  [0008](decisions/0008-lint-check-rules.md)**, `draft`, awaiting the owner. Four rules had been
+  articulated in a session on 2026-07-29 and written down in exactly one place: the context field
+  of the task asking for them to be written down somewhere else. The cost was not hypothetical — a
+  check shipped at `error` on 2026-07-30, which rule 3 forbids, and was demoted the same day.
+  Nobody adding it could have read the rule it broke.
+
+  **Rule 3 gained a definition, which is the part with teeth.** "Right in practice" had never been
+  defined, and the first check to need it was right on two packages scaffolded from one template —
+  two right answers, one observation. It now means four things at promotion: two correct findings
+  from inputs that do not share an origin, one of them from somewhere nobody predicted, no
+  outstanding false positive counted against the check *as it stands*, and nothing going red
+  unexamined. No time-in-service bar, deliberately: the check that shipped wrong shipped wrong on
+  evidence quality, not on youth, and elapsed time is easy to measure and measures nothing.
+
+  **A fifth rule was added and a sixth was folded in.** Rule 5 — a check must not fire on work that
+  was correct when it was done — is not derivable from the other four: the required-field checks
+  would be correct by their own logic on every task they flagged and wrong under §8 on every one of
+  them, because those fields bind at the transition. The ceiling (the clause being enforced can cap
+  a check below what rule 1 allows, as §8 does at `info` for the alias check and §13 does below
+  `error` for any unknown value) became a clause of rule 1 rather than a rule of its own, because
+  rule 1 is what answers "what level?" and two rules answering one question is P2.
+
+  **Writing them down made two things already written wrong.** §8 cited §10 for a procedure §10 did
+  not state: §10 said a check earns `error` by having been right in practice, about *one* check, and
+  never that a check enters below `error`. That is the same shape as the miscitation
+  [0006](decisions/0006-task-lifecycle.md) exists to fix, this time inside the spec rather than
+  downstream of it — §10 now states the rule generally, which makes §8's citation true, with no
+  link out because SPEC.md has none. And rule 1 as articulated described three of lint's five error
+  checks: `required-file` and `missing-type` are errors because §13 *requires* those things, not
+  because anything contradicts itself. The code drew the boundary correctly for a week while the
+  rule stated by its authors did not.
+
+  **The placeholder check still does not clear the bar** (TOOL-006, still `blocked`). Two of its
+  four criteria are met; it has no catch outside the template that prompted it, promoting it would
+  turn two live packages red on placeholders nobody has answered, and clause 3 catches a live false
+  positive nobody had noticed: markdown lets a code span wrap across a newline and the stripper's
+  span pattern excludes newlines, so a wrapped span is read as prose. The first thing the bar did
+  was disqualify the check it was written for.
 
 - **2026-07-31** — **six borrowed execution fields were weighed for §8 and all six were
   rejected**, as [0007](decisions/0007-execution-fields-stay-out-of-the-task-record.md) (`draft`,
@@ -350,8 +393,9 @@ None.
 | Brand assets here match the hub byte for byte | yes, all 4 registered — the logomark under a corrected filename | 2026-07-30 | md5 across both working trees |
 | Lint reads `tasks/tasks.yaml` | **yes, since 2026-07-31** — form only: the `todo` alias at `info`, a status outside §8 at `warn`, and whether `blocked` and an unresolved `blockedBy` agree | 2026-07-31 | source — `TASK_STATUS_ALIASES` and three `task-status-*` checks |
 | Adopters in production | 1 project + 1 tooling line (8 published packages) | 2026-07-29 | npm registry |
-| Lint runs clean on itself | yes — 0 errors, 0 warnings, 0 info, 20 documents | 2026-07-31 | `node tools/nytka-lint.mjs .` |
+| Lint runs clean on itself | yes — 0 errors, 0 warnings, 0 info, 21 documents | 2026-07-31 | `node tools/nytka-lint.mjs .` |
 | Both backlogs parse whole | yes — 10 of 10 here, 47 of 47 in the tools repo, counts matched against the raw entries rather than trusted | 2026-07-31 | `node tools/nytka.mjs status` in each |
+| A code span wrapped across a newline is read as prose by `unfilled-placeholder` | yes — the span pattern excludes newlines, so the span survives stripping and its contents report | 2026-07-31 | `tools/nytka-lint.mjs`, reproduced against the vendored regex |
 | The task-management skill's status enum is `todo\|in_progress\|blocked\|done` | yes — the convergence §8 cites is now first-hand, read from the schema rather than from a note | 2026-07-31 | local plugin checkout, commit `4c8eb6b`, fetched 2026-07-27 |
 | A freshly scaffolded package reports its own blanks | yes — 0 errors, 7 warnings | 2026-07-30 | `nytka init` into a temp dir |
 | Lint dependencies | 0 | 2026-07-27 | source |

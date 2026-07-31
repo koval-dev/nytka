@@ -16,3 +16,4 @@ Format and superseding rules: [SPEC.md §6](../SPEC.md).
 | 0005 | [Tool integration is a pointer, and nytka ships one launcher skill](0005-tool-integration-is-a-pointer.md) | stable |
 | 0006 | [Tasks have a named lifecycle, and no task leaves `proposed` without a human](0006-task-lifecycle.md) | stable |
 | 0007 | [Execution fields stay out of the task record](0007-execution-fields-stay-out-of-the-task-record.md) | draft |
+| 0008 | [Five rules govern adding a lint check](0008-lint-check-rules.md) | draft |

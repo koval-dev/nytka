@@ -453,8 +453,14 @@ Installed, the same checks are `nytka lint <dir>`.
 The placeholder check is scoped to prose: angle brackets inside a code span or fence are how
 this spec and the templates document their own formats, and are never findings. That
 distinction is load-bearing — a check that flagged both would be muted, and a muted check
-still reads as coverage. It reports at `warn`, because a check earns `error` by having been
-right in practice rather than by its author being confident.
+still reads as coverage.
+
+It reports at `warn`, and so does every new check. **A check enters at `info` or `warn` and is
+promoted to `error` only after it has been right in practice** — right on inputs that do not
+share an origin, with no false positive outstanding against the check as it currently stands.
+A check that errors wrongly on day one teaches people to ignore the tool, and fixing the check
+does not un-teach it. Two right answers on two packages scaffolded from one template are one
+observation, not two.
 
 ---
 

@@ -97,8 +97,8 @@ git add -A && git commit -m "Initialize nytka project package"
 
 A clean report means no template placeholder is left. Placeholders are **warnings**, not
 errors, so this does not fail the command — you have to read it. That is deliberate: the check
-is new, and [TOOL-002](../tasks/tasks.yaml) rule 3 keeps a new check out of `error` until it
-has been right in practice. It gets promoted once it has earned it.
+is new, and [0008](../decisions/0008-lint-check-rules.md) rule 3 keeps a new check out of `error`
+until it has been right in practice. It gets promoted once it has earned it.
 
 ---
 
