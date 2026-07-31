@@ -28,8 +28,10 @@ cd my-project && git init
 become the directory name — and ends by linting what it just wrote. The errors it prints are
 the blanks no tool can fill for you; steps 2 and 3 are how you clear them.
 
-A plain `cp -R nytka/templates/project` still works and is what `init` does underneath, but it
-copies the placeholders verbatim and nothing afterwards checks that you replaced them.
+A plain `cp -R nytka/templates/project` still works and is roughly what `init` does underneath,
+but it copies the placeholders verbatim with nothing afterwards checking that you replaced
+them, and it hands you the template's `.npmignore` — packaging metadata that `init` skips and
+that no project should carry. Delete it if you go that route.
 
 ### 2. Fill `project.yaml`
 

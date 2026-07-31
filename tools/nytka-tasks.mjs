@@ -429,6 +429,9 @@ export function runTaskCommand (argv = [], { cwd = process.cwd(), today = isoDat
     const walk = (from, to) => {
       mkdirSync(to, { recursive: true })
       for (const name of readdirSync(from)) {
+        // Packaging metadata for the template itself, not project content. It exists only so
+        // npm ships the template's `.gitignore` instead of eating it; see templates/.npmignore.
+        if (name === '.npmignore') continue
         const f = join(from, name), t = join(to, name)
         if (statSync(f).isDirectory()) walk(f, t)
         else if (existsSync(t)) { skipped++; console.log(`  skip   ${relative(dest, t)}`) }

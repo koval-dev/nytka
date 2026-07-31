@@ -44,6 +44,19 @@ decided where lint's source lives. Both lanes run the same conformance code.
 
 ## Recent meaningful changes
 
+- **2026-07-30** — **the secrets discipline was the one part of the template that never shipped.**
+  npm refuses to publish a file named `.gitignore` *and* reads it as pack instructions on the way
+  out, so the template's own `private/` rule removed `private/` from the tarball while the
+  `.gitignore` removed itself: 14 of 16 template files published. Every project scaffolded with
+  `npx @nytka/cli init` arrived with no gitignore and no `private/`, under an `AGENTS.md` still
+  saying "`private/` is gitignored" — a false claim about where secrets are safe, and the reason
+  kd-agency has neither. Fixed by `templates/project/.npmignore` (`!.gitignore`), which overrides
+  the ignore source and puts the file back; npm strips `.npmignore` itself and `init` skips it, so
+  nothing reaches a project. No rename was needed — the first fix considered renamed the template
+  file and would have made the manual `cp -R` path worse for nothing. Same failure family as
+  0.3.0's missing `templates/` in `files`: correct in the working tree, silently wrong from the
+  registry. The test now asserts against the tarball and fails without the fix.
+
 - **2026-07-30** — **`init` now ends at a lint report rather than at "files exist".**
   `templates/project/AGENTS.md` shipped `node <path-to-nytka>/tools/nytka-lint.mjs .`, a
   placeholder no step ever substituted. It reached two real projects and surfaced only when an
