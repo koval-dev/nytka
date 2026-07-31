@@ -409,10 +409,22 @@ export function runTaskCommand (argv = [], { cwd = process.cwd(), today = isoDat
     console.log(out.join('\n'))
   }
 
+  /**
+   * Fill the blanks the tool already knows the answer to. A value init can derive is not
+   * authoring work, and shipping it as a blank invites exactly one outcome: `<path-to-nytka>`
+   * sat in this template for weeks and reached two projects, because it looked like something
+   * a human was supposed to write when it was really a lookup.
+   */
+  function substitute (rel, text, projectName) {
+    if (rel === 'project.yaml') return text.replace(/^id: my-project\b/m, `id: ${projectName}`)
+    return text.replace(/<project>/g, projectName)
+  }
+
   function cmdInit (target) {
     const src = templatesDir()
     if (!existsSync(src)) { console.error(`nytka: template not found at ${src}`); throw new TaskUsageError() }
     const dest = resolve(target ?? '.')
+    const projectName = basename(dest)
     let created = 0, skipped = 0
     const walk = (from, to) => {
       mkdirSync(to, { recursive: true })
@@ -420,14 +432,26 @@ export function runTaskCommand (argv = [], { cwd = process.cwd(), today = isoDat
         const f = join(from, name), t = join(to, name)
         if (statSync(f).isDirectory()) walk(f, t)
         else if (existsSync(t)) { skipped++; console.log(`  skip   ${relative(dest, t)}`) }
-        else { copyFileSync(f, t); created++; console.log(`  create ${relative(dest, t)}`) }
+        else {
+          const rel = relative(dest, t)
+          if (/\.(md|yaml)$/.test(name)) writeFileSync(t, substitute(rel, readFileSync(f, 'utf8'), projectName))
+          else copyFileSync(f, t)
+          created++
+          console.log(`  create ${rel}`)
+        }
       }
     }
     console.log(`\n  scaffolding into ${dest}\n`)
     walk(src, dest)
     console.log(`\n  ${created} created, ${skipped} left alone\n`)
-    console.log('  next: fill project.yaml and AGENTS.md, delete the directories you do not')
-    console.log('  need yet, then `git init` and `nytka status`.\n')
+
+    // Init ends in a lint report rather than in advice. Its old last line was a list of things
+    // to remember, which is the same non-enforcement that let a placeholder reach two projects:
+    // nothing downstream could tell a filled-in package from a raw copy. Now every remaining
+    // blank is a finding with a filename against it, and `nytka lint .` re-asks the question.
+    const result = runLint(dest, TODAY)
+    if (result) console.log(formatReport(result))
+    console.log('  the findings above are the blanks only you can fill — then `git init`.\n')
   }
 
   function cmdLint (dir) {

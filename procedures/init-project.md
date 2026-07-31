@@ -20,9 +20,16 @@ If context already exists in any form, use `adopt-existing.md` instead.
 ### 1. Copy the template
 
 ```bash
-cp -R nytka/templates/project my-project
+nytka init my-project
 cd my-project && git init
 ```
+
+`init` fills the values it can derive — the `AGENTS.md` title and `project.yaml → id` both
+become the directory name — and ends by linting what it just wrote. The errors it prints are
+the blanks no tool can fill for you; steps 2 and 3 are how you clear them.
+
+A plain `cp -R nytka/templates/project` still works and is what `init` does underneath, but it
+copies the placeholders verbatim and nothing afterwards checks that you replaced them.
 
 ### 2. Fill `project.yaml`
 
@@ -74,9 +81,12 @@ reconstructed rationale, which is worth much less than the real one.
 ### 7. Lint and commit
 
 ```bash
-node /path/to/nytka/tools/nytka-lint.mjs .
+nytka lint .
 git add -A && git commit -m "Initialize nytka project package"
 ```
+
+Zero errors here means every template placeholder is gone. It does not mean the file is
+*good* — only that nothing is still holding a blank where a decision belongs.
 
 ---
 
@@ -93,8 +103,12 @@ run unsupervised.
 | Every directory exists but most are empty | scaffolded rather than grown | delete the empty ones |
 | `overview.md` and `current-state.md` say the same thing | the split is not understood | overview = years, current-state = weeks |
 | Decisions written as "we should probably…" | proposals recorded as decisions | a decision is a choice made, with consequences |
+| An agent invents a path for a tool or file | a placeholder survived init, so it guessed | `nytka lint .` — `unfilled-placeholder` names the file and the line |
 
 ## Done when
 
 `project.yaml` and `AGENTS.md` are filled in, founding decisions are recorded, lint reports
 no errors, and the first commit exists.
+
+"Filled in" is checkable rather than a matter of judgment: lint fails on any template
+placeholder left in prose, so a package that scaffolded and stalled cannot report done.

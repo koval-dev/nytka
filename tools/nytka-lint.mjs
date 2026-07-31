@@ -46,6 +46,12 @@ const VALID_STATUS = new Set(['draft', 'stable', 'deprecated', 'superseded'])
 const VALID_CONFIDENCE = new Set(['stated', 'inferred', 'ambiguous'])
 // current-state.md is considered stale after this many days without an update.
 const CURRENT_STATE_MAX_AGE_DAYS = 30
+// Raw HTML a markdown document may legitimately contain, so C11 does not read it as a blank.
+const HTML_TAGS = new Set([
+  'br', 'hr', 'b', 'i', 'em', 'strong', 'code', 'pre', 'div', 'span', 'p', 'a', 'img',
+  'ul', 'ol', 'li', 'table', 'thead', 'tbody', 'tr', 'td', 'th', 'details', 'summary',
+  'sup', 'sub', 'kbd', 'blockquote', 'figure', 'figcaption', 'small', 'mark', 'picture',
+])
 
 /**
  * Local calendar date. Not `toISOString().slice(0, 10)` — that converts to UTC first, so
@@ -255,6 +261,29 @@ export function lintProject (dir = '.', { today = isoDate() } = {}) {
     if (basename(rel) === 'README.md') continue
     if (!linkedTo.has(rel)) {
       add('info', 'orphan', rel, 'no other document links to it')
+    }
+  }
+
+  // C11 — template residue: a file that was scaffolded and never filled in.
+  //
+  // Scoped deliberately. The template documents its own formats with angle brackets —
+  // `<PREFIX>-<nnn>`, `{ by: <model>, at: <date> }` — and those lines are meant to survive
+  // forever. Every one of them sits inside a code span or a fence, because that is what
+  // documenting a format looks like; every genuine blank sits in prose. Strip code first and
+  // the two stop being the same string. A check that flagged both would be muted within a
+  // week, and a muted check is worse than no check — it still reads as coverage.
+  for (const [rel, { text }] of docs) {
+    if (basename(rel) === 'README.md') continue     // the template READMEs *are* the format docs
+    const prose = text
+      .replace(/^---\n[\s\S]*?\n---\n/, '')         // frontmatter carries format examples too
+      .replace(/```[\s\S]*?```/g, '')
+      .replace(/`[^`\n]*`/g, '')
+    for (const m of new Set(prose.match(/<[A-Za-z][A-Za-z0-9 _-]*>/g) ?? [])) {
+      if (HTML_TAGS.has(m.slice(1, -1).toLowerCase())) continue
+      add('error', 'unfilled-placeholder', rel, `\`${m}\` is a template placeholder — fill it in or delete the line`)
+    }
+    if (text.includes('<!--')) {
+      add('warn', 'template-comment', rel, 'template instructions (`<!-- ... -->`) still present — scaffolded but not written')
     }
   }
 

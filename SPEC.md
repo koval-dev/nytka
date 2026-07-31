@@ -355,6 +355,7 @@ A health check, run at session start and after any ingest. It reports:
 | missing `type` | files outside the vocabulary |
 | `current-state.md` age | a "current" state that stopped being current |
 | orphaned documents | nothing links to them |
+| template placeholders in prose | a package that scaffolded and was never filled in |
 
 Lint is the highest-value operation and the one most projects skip. Nearly every knowledge
 failure in a real project is something a lint pass would have flagged: a superseded decision
@@ -362,6 +363,12 @@ never marked, a count that drifted from the live system, a string that got "corr
 wrong value in seventeen files.
 
 Nytka ships `tools/nytka-lint.mjs` — zero dependencies, `node tools/nytka-lint.mjs <dir>`.
+Installed, the same checks are `nytka lint <dir>`.
+
+The placeholder check is scoped to prose: angle brackets inside a code span or fence are how
+this spec and the templates document their own formats, and are never findings. That
+distinction is load-bearing — a check that flagged both would be muted, and a muted check
+still reads as coverage.
 
 ---
 

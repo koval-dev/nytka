@@ -78,4 +78,4 @@ a token into a file, a commit message, or a task description.
 
 ## Before finishing
 
-Run lint: `node <path-to-nytka>/tools/nytka-lint.mjs .`
+Run lint: `nytka lint .`
