@@ -73,6 +73,9 @@ stale_after: 2027-01-01   # if it describes anything that moves
    conclusion into `research/`.
 5. **Contradictions are not wording problems.** If new material conflicts with an existing
    file, that is a decision to make or a question to ask — not text to smooth over.
+6. **Never accept your own task proposals.** A task you create is `proposed`, with
+   `proposedBy`; only a human recorded in `acceptedBy` moves it out. Your idea and the owner's
+   plan must not look the same in a file, for the same reason `verified` exists.
 
 ## Before you finish
 

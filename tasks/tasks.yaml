@@ -1,5 +1,5 @@
 version: 1
-updated: "2026-07-30"
+updated: "2026-07-31"
 
 # Nytka's own backlog. Schema: SPEC.md §8.
 
@@ -33,7 +33,7 @@ tasks:
 
   - id: SPEC-002
     title: "Name the task lifecycle in SPEC §8"
-    status: in_progress
+    status: review
     priority: high
     owner: mike
     blockedBy: []
@@ -49,8 +49,10 @@ tasks:
 
       Decision 0006 drafts the lifecycle and the rule that no task leaves `proposed` without a
       human in `acceptedBy` — the task-level equivalent of the trust tiers §5 already gives
-      documents. Two open points block the SPEC edit: whether `todo` is dropped in favour of
-      `ready`, and whether `acceptedBy` earns its own field or reuses `verified`.
+      documents. Two open points blocked the SPEC edit: whether `todo` is dropped in favour of
+      `ready`, and whether `acceptedBy` earns its own field or reuses `verified`. Both were
+      settled by the owner on 2026-07-30 and 0006 is stable. What is left is in another repo —
+      see the workLog.
     acceptanceCriteria:
       - "0006 is confirmed by the owner and its two open points are settled"
       - "SPEC §8 names every status and what moves a task from each one to the next"
@@ -58,8 +60,76 @@ tasks:
       - "kd-nytka/AGENTS.md no longer cites §8 for a vocabulary §8 does not define"
       - "every tasks.yaml in the line uses only the named statuses"
       - "node tools/nytka-lint.mjs . passes with zero errors"
+    workLog:
+      - at: 2026-07-30
+        note: |
+          0006 is settled and §8 is written. Criteria 1, 2, 3 and 6 are met; 4 and 5 are not,
+          and neither can be met from this repo.
+
+          What the owner settled: `ready` is canonical and `todo` is a documented alias read as
+          `ready`, kept rather than dropped because a task skill written independently of this
+          spec converged on `todo | in_progress | blocked | done` — convergence is evidence, and
+          the draft's position would have overruled it to gain one word. `acceptedBy` is its own
+          field, because §5 derives trust tiers from `verified`, so a task a human accepted would
+          have read as a claim someone checked.
+
+          §8 now names the seven statuses, what moves a task between them, and the fields each
+          state requires — plus the rule that those fields bind at the transition. Tasks closed
+          before the lifecycle existed stay conforming and are not backfilled. The three `done`
+          tasks in this file are the local case: each carries `evidence`, none carries
+          `completionSummary`, and writing one now would be a reconstruction of the kind P4
+          rejects.
+
+          Criteria 4 and 5 are work in the tools repo — a downstream AGENTS.md citing §8 for
+          four statuses, and every registry in the line using only named values. Neither is
+          checkable from a public repo that must not restate that one's contents, so both stay
+          open. §8's own rule applies: a criterion that failed sends a task back from `review`
+          rather than closing it, so this stays `in_progress`.
+
+          One finding, and it is the alias earning its keep on day one. The vendored `tools/`
+          treat only `todo` as startable. Renaming this file's two `todo` tasks to `ready` was
+          tried in a scratch copy first: `nytka status` printed an empty "Ready to start" pane
+          and `nytka next` said "nothing is ready" while two tasks were, both exiting 0. So this
+          registry keeps `todo`, which §8 makes conforming, until the task commands read the
+          canonical spelling — that fix is implementation work and belongs where the source is.
+          A rename that made the canonical value invisible would have been the exact failure the
+          format exists to prevent, shipped by the spec that named it.
+      - at: 2026-07-31
+        note: |
+          **All six criteria met. Moved to `review`, not `done`** — see the last paragraph.
+
+          Each one checked against the thing itself rather than against the entry above:
+
+            1. *0006 confirmed by the owner, both open points settled* — **met**. 0006 is
+               `stable` with a `human:mike` verifier at 2026-07-30, and its Status section
+               records both settlements, one of them against its own draft.
+            2. *§8 names every status and what moves a task between them* — **met**. The
+               Lifecycle table carries seven statuses with a "Leaves when" column, plus the
+               `cancelled`-from-any-open-status rule and the Fields-by-state table.
+            3. *agent-proposed is distinguishable from human-committed by field* — **met**.
+               `proposedBy` and `acceptedBy` are separate fields, and SPEC-003 in this file is
+               the worked instance: agent-proposed, awaiting a human, and readable as such
+               without knowing the convention.
+            4. *the downstream AGENTS.md no longer cites §8 for a vocabulary §8 lacks* —
+               **met**, re-checked 2026-07-31 rather than taken on report. That file now defers
+               to §8 as the definition instead of restating four values, and records the old
+               miscitation as a past error. Its contents are not this repo's to transcribe.
+            5. *every registry in the line uses only the named statuses* — **met**, re-checked
+               2026-07-31. Zero occurrences of the `todo` spelling in either registry, and every
+               status in use is one of §8's seven. The alias stays conforming under §13; nothing
+               depends on it any more because the vendored task commands were fixed.
+            6. *lint passes with zero errors* — **met**. 0 errors, 0 warnings, 0 info,
+               20 documents, 2026-07-31.
+
+          **Why `review` and not `done`.** Criteria 4 and 5 were re-verified inside the same
+          session that is closing the task, and 0006's stated reason for the `review` state is
+          that the person who did the work should not also be the one declaring it met. Closing
+          it here would be the judgment call `acceptanceCriteria` exists to remove, arriving by
+          the route 0006 named. `completionSummary` and `evidence` are deliberately absent:
+          §8 requires them to enter `done`, not `review`, and writing them now would pre-empt
+          the check this state exists for.
     created: 2026-07-28
-    updated: 2026-07-28
+    updated: 2026-07-31
 
   - id: ADOPT-001
     title: "Adopt nytka on a second project with a different shape"
@@ -174,7 +244,7 @@ tasks:
 
   - id: TOOL-001
     title: "Add a worked project-specific lint check to the docs"
-    status: todo
+    status: ready
     priority: low
     owner: mike
     blockedBy: []
@@ -190,7 +260,7 @@ tasks:
 
   - id: TOOL-002
     title: "Write down the rules for adding a lint check"
-    status: todo
+    status: ready
     priority: high
     owner: mike
     blockedBy: []
@@ -253,7 +323,7 @@ tasks:
   - id: SPEC-003
     title: "Settle what artifacts/ is, now that its decision trigger has fired"
     status: proposed
-    proposedBy: agent:claude-opus-5
+    proposedBy: claude-opus-5
     priority: medium
     owner: mike
     blockedBy: []

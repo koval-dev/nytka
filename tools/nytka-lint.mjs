@@ -44,6 +44,48 @@ const SKIP_DIRS = new Set(['.git', 'node_modules', 'private', '.claude', 'templa
 const EXEMPT = new Set(['README.md', 'CLAUDE.md', 'AGENTS.md', 'LICENSE.md', 'CHANGELOG.md'])
 const VALID_STATUS = new Set(['draft', 'stable', 'deprecated', 'superseded'])
 const VALID_CONFIDENCE = new Set(['stated', 'inferred', 'ambiguous'])
+
+// ---------------------------------------------------------------- the task lifecycle (§8)
+//
+// SPEC.md §8's seven statuses, and the one alias it documents. This lives here rather than in
+// tasks.mjs because it is a rule about the format, and because two copies of a vocabulary is
+// the P2 failure the format is about — tasks.mjs imports these rather than restating them.
+
+/** The seven §8 names a task may hold, in lifecycle order. */
+export const TASK_STATUSES = ['proposed', 'ready', 'in_progress', 'blocked', 'review', 'done', 'cancelled']
+
+/**
+ * `todo` is a documented alias for `ready` (SPEC §8), read as `ready` everywhere and never
+ * reported above `info`. It is kept rather than merely tolerated: a task-management skill
+ * written independently of this spec converged on `todo | in_progress | blocked | done`, and
+ * that convergence is better evidence than the argument for renaming it away.
+ */
+export const TASK_STATUS_ALIASES = { todo: 'ready' }
+
+/** Statuses a task never leaves. Both close a blocker — see unresolvedBlockers. */
+export const CLOSED_TASK_STATUSES = new Set(['done', 'cancelled'])
+
+/** The §8 spelling of a status, so nothing downstream has to know the alias exists. */
+export function canonicalTaskStatus (status) {
+  const s = status == null ? '' : String(status)
+  return TASK_STATUS_ALIASES[s] ?? s
+}
+
+/**
+ * The blockers that are still open, by id.
+ *
+ * `cancelled` closes a blocker as surely as `done` does: a task waiting on work that will never
+ * happen waits forever, and §8 makes both terminal. A blocker this registry does not contain
+ * stays unresolved — an id it cannot see is one it cannot call closed.
+ *
+ * @param {object} task           a task record
+ * @param {Map<string, object>} byId  every task in the registry, by string id
+ */
+export function unresolvedBlockers (task, byId) {
+  const raw = task?.blockedBy
+  const blockers = Array.isArray(raw) ? raw : (raw ? [raw] : [])
+  return blockers.map(String).filter(b => !CLOSED_TASK_STATUSES.has(canonicalTaskStatus(byId.get(b)?.status)))
+}
 // current-state.md is considered stale after this many days without an update.
 const CURRENT_STATE_MAX_AGE_DAYS = 30
 // Raw HTML a markdown document may legitimately contain, so C11 does not read it as a blank.
@@ -71,7 +113,7 @@ export class LintUsageError extends Error {
 // The parser lives in yaml.mjs and is shared with the task commands. It used to live here,
 // in a second subset that disagreed with the other one — see 0010.
 export { parseFrontmatter } from './nytka-yaml.mjs'
-import { parseFrontmatter } from './nytka-yaml.mjs'
+import { parseFrontmatter, parseYaml } from './nytka-yaml.mjs'
 
 // ---------------------------------------------------------------- walk
 
@@ -304,6 +346,99 @@ export function lintProject (dir = '.', { today = isoDate() } = {}) {
     }
     if (prose.includes('<!--')) {
       add('warn', 'template-comment', rel, 'template instructions (`<!-- ... -->`) still present — scaffolded but not written')
+    }
+  }
+
+  // C12 — the task registry's vocabulary (SPEC.md §8)
+  //
+  // The first checks that open tasks.yaml at all. Until now lint read markdown frontmatter and
+  // nothing else, so a backlog could say anything and a clean run said nothing about it.
+  //
+  // Read what the project declares (../nytka TOOL-002 rule 4): a project on an external tracker
+  // owns status there and keeps a GENERATED snapshot here, so checking the snapshot would report
+  // the tracker's state as this repo's defect. No registry, or a tracker that is not `file`, and
+  // these checks are skipped rather than guessed at.
+  //
+  // Every level here is info or warn, under rule 3 — a check enters below `error` and is
+  // promoted only once it has been right somewhere nobody predicted:
+  //
+  //   task-status-alias        info. §8 says exactly this: `todo` is a documented alias for
+  //                            `ready`, no checker may raise it above info, and §13 forbids
+  //                            rejecting a project over it. It is a nudge toward one spelling,
+  //                            not a defect.
+  //   task-status-unknown      warn. §13 forbids a consumer rejecting an unknown status value,
+  //                            so `error` is out on conformance grounds alone; warn keeps the
+  //                            format able to gain a status without breaking every checker.
+  //   task-blocked-consistency warn. Rule 1 would eventually allow `error` — a task claiming
+  //                            `blocked` with nothing open contradicts itself, which is what an
+  //                            error means — but rule 3 governs entry, and the evidence so far
+  //                            is two catches in ONE registry, found by hand. That is one
+  //                            source, not the independent confirmation rule 3 asks for, and it
+  //                            is the same "two packages from one template" mistake TOOL-006 is
+  //                            still parked on. Promote when it has been right on a backlog
+  //                            nobody here maintains.
+  //
+  // Deliberately absent: the fields §8 requires to ENTER a state — `evidence` and
+  // `completionSummary` at `done`, `acceptedBy` after `proposed`, `reason` at `cancelled`.
+  // Those bind at the transition and are explicitly not retroactive, and lint sees only the
+  // state a task is in now, never the transition that put it there. With no record of when a
+  // project adopted the lifecycle, a check for them cannot tell a task closed last year from
+  // one closed today, so it would fire on every correctly-closed task in every existing
+  // registry — the "non-conforming on the day it is published" outcome §8 names as how a spec
+  // teaches people to ignore it. Left to RT-007, which is where the transition record would
+  // have to come from.
+  const projectPath = join(root, 'project.yaml')
+  let project = null
+  if (existsSync(projectPath)) {
+    try { project = parseYaml(readFileSync(projectPath, 'utf8'), 'project.yaml', { lenient: true }) } catch { project = null }
+  }
+  const tracker = project?.tasks?.tracker ?? 'file'
+  const registryRel = String(project?.tasks?.registry ?? 'tasks/tasks.yaml')
+  const registryPath = join(root, registryRel)
+
+  if (tracker === 'file' && existsSync(registryPath)) {
+    const text = readFileSync(registryPath, 'utf8')
+    let doc = null
+    try {
+      doc = parseYaml(text, registryRel)
+    } catch (e) {
+      // Strict is how the task commands read it, so this is not pedantry: a registry that
+      // raises here is one `nytka status` refuses to open. Report it, then read it leniently
+      // anyway — lint must not go quiet on a file because of one line it could not follow.
+      add('warn', 'task-registry', registryRel, `does not parse — the task commands cannot read it: ${e.message.split('\n')[0]}`)
+      try { doc = parseYaml(text, registryRel, { lenient: true }) } catch { doc = null }
+    }
+
+    const tasks = Array.isArray(doc?.tasks) ? doc.tasks : []
+    const byId = new Map(tasks.map(t => [String(t.id), t]))
+
+    for (const t of tasks) {
+      const id = t.id ?? '(a task with no id)'
+      const raw = t.status == null ? '' : String(t.status)
+      const status = canonicalTaskStatus(raw)
+
+      if (!raw) {
+        add('warn', 'task-status-unknown', registryRel, `${id}: has no status — SPEC §8 lists it as a minimum field`)
+      } else if (raw !== status) {
+        add('info', 'task-status-alias', registryRel,
+          `${id}: status "${raw}" is a documented alias for "${status}" (SPEC §8) — "${status}" is the canonical spelling`)
+      } else if (!TASK_STATUSES.includes(status)) {
+        add('warn', 'task-status-unknown', registryRel,
+          `${id}: status "${raw}" is not one of ${TASK_STATUSES.join(' | ')} — §13 forbids rejecting it, so this is a warning, not an error`)
+      }
+
+      // `blocked` and an unresolved `blockedBy` imply each other (SPEC §8). Either half alone
+      // drops the task out of both "what can I start" and "what is stuck", which is the one
+      // question a backlog is kept to answer.
+      if (CLOSED_TASK_STATUSES.has(status)) continue
+      const open = unresolvedBlockers(t, byId)
+      if (status === 'blocked' && !open.length) {
+        add('warn', 'task-blocked-consistency', registryRel,
+          `${id}: status is "blocked" but nothing in blockedBy is still open — §8: the two imply each other`)
+      } else if (status !== 'blocked' && open.length) {
+        add('warn', 'task-blocked-consistency', registryRel,
+          `${id}: waiting on ${open.join(', ')} but status is "${raw}" — §8 reads unresolved blockers as "blocked", and as this stands it appears in neither half of \`nytka status\``)
+      }
     }
   }
 

@@ -19,17 +19,25 @@
 //   next                    the highest-priority task with nothing blocking it
 //   task list [--status s]  every task, one line each
 //   task show <id>          one full record
+//   task accept <id>        proposed -> ready.  needs --by human:<id>
 //   task start <id>         status -> in_progress
+//   task review <id>        status -> review, when the work is finished and unchecked
 //   task done <id>          status -> done
 //   task block <id> <by>    status -> blocked, blockedBy += <by>
+//   task cancel <id>        status -> cancelled.  needs --reason "…"
 //   context <id>            assemble the bounded context for a task (SPEC.md §10)
 //   init [dir]              scaffold a new package from templates/project
 //   lint [dir]              run the format checks
 //
-// Options: --json, --status <value>, --today <YYYY-MM-DD>
+// Options: --json, --status <value>, --today <YYYY-MM-DD>, --by, --owner, --reason
 //
 // --json applies to every command above. Task records follow SPEC.md §8 field for field, so a
 // backlog read here and a backlog read from a tracker describe a task the same way.
+//
+// The statuses are SPEC.md §8's — proposed, ready, in_progress, blocked, review, done,
+// cancelled — and `todo` is a documented alias for `ready`, read as one everywhere here.
+// Only `task accept` moves a task out of `proposed`, and only with a human: actor: agents may
+// create tasks freely and may promote none of them.
 //
 // This is the thin end of the tool. Everything it does lives in tasks.mjs, which is shared with
 // `nytka <command>` from the installed package — so the committed copy and the published CLI

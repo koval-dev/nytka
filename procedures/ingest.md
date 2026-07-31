@@ -49,6 +49,10 @@ of what must happen. An ingest that updates only the narrative leaves the backlo
 things that stopped being true — and no other operation will catch it, because `nytka-lint`
 does not read the registry.
 
+A task an ingest *adds* is `proposed`, carrying `proposedBy`. Distilling a chat log is the
+moment an agent produces the most plausible work nobody committed to, and SPEC §8 keeps that
+separable from the plan. Only a human moves it out of `proposed`.
+
 ### 2. Discard aggressively
 
 Greetings · tool narration · abandoned brainstorming · superseded assumptions · duplicate

@@ -51,11 +51,17 @@ Each piece of existing context goes to exactly one place:
 | A finding worth reusing | `research/` |
 | Collected data | `datasets/index.json` (metadata only) |
 | What is happening now | `current-state.md` |
+| An existing task list | the registry `project.yaml → tasks` declares |
 | An open question with no answer | `unresolved.md` |
 | Everything else | leave it in the archive |
 
 Discard: greetings, tool narration, abandoned brainstorming, superseded assumptions,
 duplicate answers, and raw data already stored elsewhere.
+
+A migrated backlog keeps the shape it had. Map its statuses onto SPEC §8 — `todo` is an alias
+for `ready` and needs no rename — and leave already-closed tasks closed. Step 3 is about claims
+a live system can settle; a `completionSummary` reconstructed for work that finished before this
+package existed is the same invented rationale the failure table below warns about.
 
 ### 3. Verify every inherited claim
 

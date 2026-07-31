@@ -1,9 +1,10 @@
 ---
 type: Decision
 title: Tasks have a named lifecycle, and no task leaves proposed without a human
-status: draft
+status: stable
 generated: { by: claude-opus-5, at: 2026-07-28 }
-confidence: inferred
+verified: [{ by: "human:mike", at: 2026-07-30 }]
+confidence: stated
 supersedes: null
 superseded_by: null
 tags: [tasks, lifecycle]
@@ -71,12 +72,13 @@ which is the judgment call returning by a different route.
 
 ## Consequences
 
-- **`todo` is dropped in favour of `ready`, and this is the one part that is not purely
-  additive.** The two mean the same thing; keeping both guarantees inconsistent use, and seven
-  statuses is already at the edge of what `AGENTS.md`'s *"can an agent follow it without
-  tooling?"* test tolerates. Existing `todo` values stay conforming under §13 and should be
-  read as `ready`. Every registry in the line needs a pass. **This is the open point on this
-  record** — keeping `todo` and dropping `ready` is the coherent alternative.
+- **`ready` is canonical, and `todo` is a documented alias read as `ready`.** *This record
+  drafted the opposite — `todo` dropped outright, as the one part of the change that was not
+  purely additive — and was settled against its own draft on 2026-07-30. The reasoning is in
+  Status below.* An alias is not "keeping both", which would guarantee inconsistent use: one
+  spelling is what §8 names and what a checker nudges toward at `info`, the other is what §13
+  already guarantees a consumer will not reject. Every existing `todo` stays conforming, and no
+  registry in the line needs a pass.
 - **Lint still checks none of this.** Task status is spec-level only; `nytka-lint` does not
   read `tasks.yaml`. Making the `proposed` rule enforceable is a separate change to the
   linter, weighed against 0003's zero-dependency constraint. Until then the rule is followed
@@ -91,6 +93,31 @@ which is the judgment call returning by a different route.
 
 ## Status
 
-Draft, and not yet confirmed by the owner. Two things need a decision before this reaches
-`SPEC.md`: the `todo` versus `ready` question above, and whether `acceptedBy` is worth a field
-of its own rather than reusing `verified`.
+**Confirmed by the owner on 2026-07-30, and in `SPEC.md` §8 the same day.** Both open points
+were settled, one of them against this record's own draft. Confirming a draft is not the edit
+P5 forbids — nothing accepted changed meaning, because nothing here had been accepted.
+
+**`ready` is canonical; `todo` is a documented alias, not an error.** §8 names `ready`, and a
+consumer reads `todo` as `ready` under §13's liberal conformance. Dropping `todo` was the
+drafted position, and the counter-evidence is better than the argument for dropping it: a
+task-management skill the owner wrote separately, for a different project, with no reference to
+this spec — [github.com/koval-dev/claude-skills](https://github.com/koval-dev/claude-skills) —
+converged on exactly `todo | in_progress | blocked | done`. Independent convergence is the
+strongest evidence available that those four are a natural base set. Keeping `todo` conforming
+preserves that evidence instead of overruling it, and §13 is the mechanism the format already
+has for exactly this case. The alias costs one sentence in §8; dropping the word costs a pass
+over every registry in the line on the day the rule is published. Lint nudges toward the
+canonical spelling at **info** — that check is implementation work and ships from the tools
+repo, which is why §8 describes the alias rather than leaving the check to assert it.
+
+**`acceptedBy` gets its own field.** `verified` answers *who checked this claim?*; `acceptedBy`
+answers *who committed to this work?* One field with two unrelated meanings is the cheaper
+option only until something reads it, and something does: §5 derives trust tiers from
+`verified`, so every task a human accepted would derive as **human-reviewed**, asserting a check
+nobody performed.
+
+Everything else stands as drafted. §8 states one thing this record left implicit — `cancelled`
+is reachable from any open status, not only from `proposed` — and adds a rule this record needed
+and did not have: the fields required at `done` bind at the transition, so tasks closed before a
+project adopted the lifecycle stay conforming and are not backfilled. That is the same §13
+reasoning as the alias, applied to fields instead of to a spelling.

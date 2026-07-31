@@ -10,12 +10,14 @@ verified:
   - { by: claude-opus-5, at: 2026-07-30, against: github-api }
   - { by: claude-opus-5, at: 2026-07-30, against: kd-nytka-working-tree }
   - { by: claude-opus-5, at: 2026-07-30, against: npm-registry }
+  - { by: claude-opus-5, at: 2026-07-31, against: task-management-skill-schema }
+  - { by: claude-opus-5, at: 2026-07-31, against: lint-source }
 confidence: inferred
 ---
 
 # Current state
 
-**Last updated:** 2026-07-30
+**Last updated:** 2026-07-31
 
 ## Current focus
 
@@ -30,20 +32,77 @@ decided where lint's source lives. Both lanes run the same conformance code.
 
 ## Active work
 
-- **SPEC-002** — name the task lifecycle in SPEC §8, per draft decision
-  [0006](decisions/0006-task-lifecycle.md). Marked in progress since 2026-07-28, but nothing has
-  moved on it or on 0006 since that date: it is **waiting on the owner** for two answers —
-  whether `todo` is dropped for `ready`, and whether `acceptedBy` earns a field or reuses
-  `verified`. The vocabulary in use has no status meaning "waiting on a human", which is part of
-  what 0006 exists to fix.
+- **SPEC-002** — name the task lifecycle in SPEC §8. **All six criteria are met and it is in
+  `review`** as of 2026-07-31. The two that were open both closed in the tools repo: the
+  downstream `AGENTS.md` now defers to §8 instead of restating a vocabulary, and both registries
+  in the line use only §8's statuses — re-checked here rather than taken on report. It is
+  `review` and not `done` because the checking happened in the same session that finished the
+  work, which is exactly what [0006](decisions/0006-task-lifecycle.md) added the state to
+  prevent. A human closes it.
 - **TOOL-002** — write down the rules for adding a lint check. Now the larger half of what this
   repo owes lint: the implementation moved out under 0009, the rules did not. Rule 4 also
   unblocks the tasks.yaml checks in kd-nytka, which is the path to lint ever seeing the backlog.
 - **SPEC-003** — `proposed`, not accepted: settle what `artifacts/` is now that its trigger has
-  fired. Agent-proposed on 2026-07-30 and awaiting a human, per 0006's rule that nothing leaves
+  fired. Agent-proposed on 2026-07-30 and awaiting a human, per §8's rule that nothing leaves
   `proposed` without one.
 
 ## Recent meaningful changes
+
+- **2026-07-31** — **six borrowed execution fields were weighed for §8 and all six were
+  rejected**, as [0007](decisions/0007-execution-fields-stay-out-of-the-task-record.md) (`draft`,
+  awaiting the owner). `complexity`, `executionMode`, `guardrails`, `validationCommands`,
+  `requiredContext` and a runnable `verification.command` on an acceptance criterion came from a
+  task-management skill written independently of this spec — the same skill whose status enum is
+  the convergence evidence §8 cites for keeping `todo`. Nothing was added to the format.
+
+  The rejections are worth more than an adoption would have been, because the bar in
+  `unresolved.md` — *"anything beyond that must earn its place with a named failure"* — had never
+  been applied to a concrete set. Three of the six are duplicates of mechanisms nytka already has:
+  `requiredContext` restates what §10's Query row and `nytka context <id>` assemble from a task's
+  own links; `validationCommands` restates a criterion's own check, and **the two copies have
+  already drifted inside the skill's shipped example**; `guardrails` has two normative homes,
+  §11.3 and §6's Consequences, which a downstream note claiming it had "no nytka equivalent at
+  all" had missed. The runnable command is the one that looked strongest and is not: **6 of the 11
+  criteria in the skill's own worked examples carry no command at all**, and requiring one would
+  narrow §8's "checkable by someone who was not in the conversation" to whatever a shell can
+  express. Lint checks form, never truth, so there is nothing here to run it.
+
+  **The finding that mattered most was about the evidence, not the fields.** The brief said the
+  skill was not installed and that the work should proceed from a secondhand summary. It was
+  installed. Reading it directly turned up a seventh execution field the summary had missed, an
+  `expected` half to the verification shape, a `manual` verification type, and a validator whose
+  opt-in `--fix` mode writes `complexity: 5` and `executionMode: autonomous` into any task lacking
+  them — which defeats the "count what was filled in without prompting" trigger in
+  `unresolved.md` for anyone who has run it. Writing *"a file I could not open"* into a public repo
+  would have manufactured the exact unverifiable claim this format exists to flag. P3 applies to a
+  task's own premise.
+
+  **Then the record was checked against the schema a second time, and four of its own claims were
+  wrong** — corrected in place on 2026-07-31, while it is still `draft`. The rubric has three
+  context regexes, not two; one of its seven factors keys on `blockedBy`, a field nytka does have,
+  so "every factor" was too strong; `requiredContext`'s resolvable-path share is two entries in
+  twelve, not "roughly half"; and the validator's defaults are opt-in rather than automatic. Three
+  of the four had made the argument sound better than the evidence supports. **The conclusions did
+  not move — every rejection still stands** — but a record that rejects six fields for being
+  unverifiable is exactly the record that has to survive its own check, and the first pass did not.
+
+- **2026-07-30** — **§8 names a task lifecycle, and the decision behind it settled against its
+  own draft.** [0006](decisions/0006-task-lifecycle.md) was confirmed by the owner and is stable.
+  `ready` is canonical and `todo` is a **documented alias** read as `ready` — kept, not dropped,
+  because a task-management skill written independently of this spec converged on
+  `todo | in_progress | blocked | done`, and convergence from an unrelated direction is better
+  evidence than the argument for renaming. `acceptedBy` is its own field rather than a reuse of
+  `verified`: §5 derives trust tiers from `verified`, so merging them would have made every
+  human-accepted task read as a claim someone had checked. §8 now carries the seven statuses,
+  what moves a task between them, the fields each state requires, and the rule that those fields
+  bind **at the transition** — so tasks closed before the lifecycle existed stay conforming and
+  are not backfilled. `evidence` reconstructed from memory is the undated claim P4 exists to
+  reject, and a rule that makes every existing registry non-conforming on the day it is published
+  is how a spec teaches people to ignore it. The templates, `QUICKSTART.md` and two procedures
+  teach the new vocabulary. This registry deliberately keeps `todo`: the vendored task commands
+  treat only `todo` as startable, and renaming it here — tried in a scratch copy first — emptied
+  the "Ready to start" pane and had `nytka next` report "nothing is ready" with two tasks ready,
+  both exiting 0. The alias earned its keep on the day it was written.
 
 - **2026-07-30** — **`templates/project/private/README.md` was kept here by nothing but the
   order it arrived in, and the repo that publishes this template lost the file to exactly that
@@ -250,8 +309,8 @@ decided where lint's source lives. Both lanes run the same conformance code.
   corrects was never about the two repos' names, it was that no file said which one held what.
 
 - **2026-07-28** — decision [0006](decisions/0006-task-lifecycle.md) drafted: tasks get a named
-  lifecycle, and no task leaves `proposed` without a human `acceptedBy`. Not yet confirmed by
-  the owner — see Active work.
+  lifecycle, and no task leaves `proposed` without a human `acceptedBy`. Confirmed by the owner
+  on 2026-07-30 and in SPEC §8 the same day — see the entry at the top of this list.
 
 - **2026-07-28** — the open question of where durable non-text files go, and how they carry
   provenance, was recorded in `unresolved.md`, raised by the first logo needing a home.
@@ -289,9 +348,11 @@ None.
 |---|---|---|---|
 | Repo is public and the raw SPEC.md URL resolves | yes | 2026-07-30 | `gh repo view` + `curl` → 200 |
 | Brand assets here match the hub byte for byte | yes, all 4 registered — the logomark under a corrected filename | 2026-07-30 | md5 across both working trees |
-| Lint reads `tasks/tasks.yaml` | **no** | 2026-07-30 | source — 0 occurrences of "tasks" |
+| Lint reads `tasks/tasks.yaml` | **yes, since 2026-07-31** — form only: the `todo` alias at `info`, a status outside §8 at `warn`, and whether `blocked` and an unresolved `blockedBy` agree | 2026-07-31 | source — `TASK_STATUS_ALIASES` and three `task-status-*` checks |
 | Adopters in production | 1 project + 1 tooling line (8 published packages) | 2026-07-29 | npm registry |
-| Lint runs clean on itself | yes — 0 errors, 0 warnings, 0 info, 19 documents | 2026-07-30 | `node tools/nytka-lint.mjs .` |
+| Lint runs clean on itself | yes — 0 errors, 0 warnings, 0 info, 20 documents | 2026-07-31 | `node tools/nytka-lint.mjs .` |
+| Both backlogs parse whole | yes — 10 of 10 here, 47 of 47 in the tools repo, counts matched against the raw entries rather than trusted | 2026-07-31 | `node tools/nytka.mjs status` in each |
+| The task-management skill's status enum is `todo\|in_progress\|blocked\|done` | yes — the convergence §8 cites is now first-hand, read from the schema rather than from a note | 2026-07-31 | local plugin checkout, commit `4c8eb6b`, fetched 2026-07-27 |
 | A freshly scaffolded package reports its own blanks | yes — 0 errors, 7 warnings | 2026-07-30 | `nytka init` into a temp dir |
 | Lint dependencies | 0 | 2026-07-27 | source |
 | `tools/` is four generated copies | yes — lint and the task commands both regenerated 2026-07-30. `tools/` was ahead of published 0.3.1 until 0.4.0/0.4.1 shipped the same day | 2026-07-30 | file headers + the source repo's drift check |

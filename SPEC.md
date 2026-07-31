@@ -277,6 +277,87 @@ Minimum task fields: `id`, `title`, `status`, `priority`, `owner`, `blockedBy`, 
 closed against what a draft said rather than what the live system shows. A good criterion is
 checkable by someone who was not in the conversation.
 
+### Lifecycle
+
+| Status | Means | Leaves when |
+|---|---|---|
+| `proposed` | Someone thinks this should happen. No commitment. | a human accepts it → `ready`, or declines it → `cancelled` |
+| `ready` | Accepted, owned, specified. Nothing is in the way. | work starts → `in_progress` |
+| `in_progress` | Being worked now. | a dependency stops it → `blocked`; work finishes → `review` |
+| `blocked` | Cannot proceed. `blockedBy` is non-empty and unresolved. | the last blocker closes → `ready` or `in_progress` |
+| `review` | Work finished, `acceptanceCriteria` not yet checked. | every criterion checked → `done`; any criterion failed → `in_progress` |
+| `done` | Every criterion checked, with evidence. | never |
+| `cancelled` | Will not be done. `reason` required. | never |
+
+`cancelled` is reachable from any open status, not only from `proposed`. `done` is not: work
+that turned out to be unnecessary was cancelled, and recording it as completed inflates the one
+number a backlog is asked for.
+
+The lifecycle is what a tracker *represents*, not what it redefines. A tracker with no
+equivalent of `proposed` maps it onto its own backlog state and `AGENTS.md` records the mapping.
+
+**A task may not leave `proposed` without a `human:` actor recorded in `acceptedBy`.** Agents
+may create tasks freely and may move none of them out of `proposed`.
+
+This is §5's trust distinction applied to work rather than to claims. Without it an agent can
+append twenty plausible tasks to a registry and they read exactly like the ones the owner chose.
+`acceptedBy` is its own field rather than a reuse of `verified` because the two answer different
+questions — `verified` records who checked a claim, `acceptedBy` records who committed to the
+work. Merged, every human-accepted task would derive as **human-reviewed** under §5, asserting
+that someone had checked something nobody has checked.
+
+**`blocked` and an unresolved `blockedBy` imply each other.** A task whose blockers are still
+open but whose status says `ready` claims to be startable and is not; one that says `blocked`
+with an empty `blockedBy` names nothing to wait for. Either way it falls out of both halves of
+"what can I start, and what is stuck?" — which is the whole question a backlog is kept to answer.
+
+`review` is what stops "done" from being self-assessed: with no state between finishing and
+closing, the person who did the work is also the one declaring it met, and that is the judgment
+call `acceptanceCriteria` exists to remove. It is also the state four values cannot express. In
+one real project three tasks reached "written, checked, not yet released" on the same day; a
+four-value vocabulary had to record all three as `in_progress`, so the board asserted three
+tasks were being actively worked when none was.
+
+### Fields by state
+
+Every task carries the minimum fields in every state. These are additional, and each is required
+to **enter** the state named:
+
+| State | Also required |
+|---|---|
+| `proposed` | `proposedBy` — an actor (§5). `owner` may be empty; a proposal has no champion yet. |
+| every state after `proposed` | `acceptedBy` — a `human:` actor — and a non-empty `owner` |
+| `blocked` | a non-empty `blockedBy` |
+| `done` | `completionSummary` and `evidence` |
+| `cancelled` | `reason`. Without it a backlog forgets what it already rejected and proposes it again. |
+
+`workLog` and `artifacts` are optional everywhere and append-only. A `workLog` entry rewritten
+to agree with how things turned out is worth nothing.
+
+### Existing tasks
+
+`todo` is a **documented alias for `ready`** and is read as `ready`. §13 forbids rejecting a
+project over it, and no checker may raise it above `info`. `ready` is the canonical spelling
+because the other six statuses name the state a task is in rather than instruct the reader.
+
+The alias is kept rather than merely tolerated. A task-management skill written independently,
+for a different kind of project, by someone not working from this spec, arrived at exactly
+`todo | in_progress | blocked | done`. Convergence from an unrelated direction is the strongest
+evidence available that those four are the natural base set, and overruling it to gain one word
+would cost every existing registry a rewrite on the day this was published.
+
+**The required fields bind at the transition, not retroactively.** A task closed before its
+project adopted this lifecycle is conforming as it stands and stays that way: the transition
+that would have demanded `completionSummary` and `evidence` already happened and cannot be
+re-run.
+
+Do not backfill them. `evidence` reconstructed months later from memory is an undated claim
+about work nobody re-checked, which is what P4 exists to reject, and the empty field is the more
+useful record — it marks exactly which tasks predate the rule. A checker that learns these rules
+introduces them the way §10 describes, at `info` or `warn`, promoted only after being right in
+practice. A rule that makes every existing registry non-conforming on the day it is published is
+how a spec teaches people to ignore it.
+
 ---
 
 ## 9. Datasets
@@ -429,7 +510,8 @@ A conforming nytka project:
    non-empty `type`
 
 A conforming consumer **must not** reject a project for unknown keys, unknown `type` values,
-broken cross-links, missing optional files, or frontmatter fields it does not recognise.
+unknown task `status` values, broken cross-links, missing optional files, or frontmatter fields
+it does not recognise.
 
 ---
 

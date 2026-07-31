@@ -34,7 +34,10 @@ import { join, resolve, dirname, relative, basename } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
 import { parseYaml } from './nytka-yaml.mjs'
-import { lintProject, formatReport, formatJson, isoDate } from './nytka-lint.mjs'
+import {
+  lintProject, formatReport, formatJson, isoDate,
+  TASK_STATUSES, CLOSED_TASK_STATUSES, canonicalTaskStatus, unresolvedBlockers,
+} from './nytka-lint.mjs'
 
 /** Thrown when a command was called wrongly. The message is already printed by then. */
 class TaskUsageError extends Error {
@@ -57,7 +60,7 @@ function templatesDir () {
  * @param {{cwd?: string, today?: string}} opts
  */
 export function runTaskCommand (argv = [], { cwd = process.cwd(), today = isoDate() } = {}) {
-  const VALUE_FLAGS = new Set(['today', 'status'])
+  const VALUE_FLAGS = new Set(['today', 'status', 'by', 'owner', 'reason'])
   const BOOL_FLAGS = new Set(['json'])
   const flags = {}
   const positional = []
@@ -254,11 +257,84 @@ export function runTaskCommand (argv = [], { cwd = process.cwd(), today = isoDat
   const pad = (s, n) => String(s ?? '').padEnd(n)
   const byPriority = (a, b) => (PRIORITY[a.priority] ?? 3) - (PRIORITY[b.priority] ?? 3)
 
+  // ------------------------------------------------------------------ the lifecycle
+  //
+  // SPEC.md §8's seven statuses, read the way §8 reads them. The vocabulary itself is in
+  // lint.mjs so there is one copy of it; what belongs here is what each state means for the
+  // question these commands answer — "what should I work on next?"
+  //
+  //   proposed     an idea, not a commitment. NOT startable, and that is the point: a task
+  //                leaves `proposed` only when a human is recorded in `acceptedBy`, so a tool
+  //                that handed one to `next` would perform the promotion the rule forbids.
+  //                It gets its own pane instead, because a proposal nobody sees is a proposal
+  //                nobody accepts or declines.
+  //   ready        startable. `todo` is the same state under the older spelling and is treated
+  //                identically everywhere — §8 documents it as an alias, and nothing here may
+  //                report it above `info`.
+  //   in_progress  being worked. Not offered again.
+  //   blocked      still asked the blocker question, because the answer changes the moment the
+  //                last one closes — that is §8's own transition out of it. A `blocked` task
+  //                with nothing open therefore reads as ready; lint reports the contradiction,
+  //                which is the right division of labour: this command answers what to do now,
+  //                lint says the file disagrees with itself.
+  //   review       finished, not yet checked against acceptanceCriteria. Work for a person, but
+  //                not work to *start* — so it is a pane of its own rather than part of either.
+  //   done         closed.
+  //   cancelled    closed and will not be done. Terminal like `done`.
+  const statusOf = t => canonicalTaskStatus(t?.status)
+  const isClosed = t => CLOSED_TASK_STATUSES.has(statusOf(t))
+
+  /**
+   * Can this be started right now? `ready` says yes outright; `blocked` says yes the moment
+   * nothing in `blockedBy` is still open. Nothing else does — see the note above for why
+   * `proposed` is absent, which is the rule 0006 exists for.
+   */
   function isActionable (t, byId) {
-    if (t.status !== 'todo' && t.status !== 'blocked') return false
-    const blockers = Array.isArray(t.blockedBy) ? t.blockedBy : []
-    return blockers.every(b => byId.get(String(b))?.status === 'done')
+    const s = statusOf(t)
+    if (s !== 'ready' && s !== 'blocked') return false
+    return unresolvedBlockers(t, byId).length === 0
   }
+
+  /**
+   * Open tasks that cannot move: `blocked` ones, and — the case that has bitten this line twice
+   * — ones whose blockers are open while their status says otherwise. §8 makes the two imply
+   * each other, and a task holding one half without the other used to appear in neither pane:
+   * not startable, so not in "Ready to start"; not `blocked`, so not in "Blocked". Invisible in
+   * the tool whose job is to say what is stuck.
+   */
+  const isStuck = (t, byId) => !isClosed(t) && unresolvedBlockers(t, byId).length > 0
+
+  /**
+   * The verbs, and the states §8 says each one is reached from.
+   *
+   * Two are looser than the table in §8 and both are deliberate:
+   *
+   *   `done` is listed as reachable from `ready` and `blocked` as well as `review`. §8 routes
+   *   finishing through `review`, and the command says so when it is skipped — but refusing
+   *   would leave hand-editing the status as the only way to close a small task, and a rule
+   *   people route around is not a rule that is being followed.
+   *
+   *   `block` is reachable from `blocked`, because adding a second blocker to an already
+   *   blocked task is the same operation as adding the first.
+   *
+   * `accept` is the strict one, and it is the rule this whole vocabulary exists for.
+   */
+  const TRANSITIONS = {
+    accept: { to: 'ready', from: ['proposed'] },
+    start: { to: 'in_progress', from: ['ready', 'blocked', 'review'] },
+    block: { to: 'blocked', from: ['ready', 'in_progress', 'blocked', 'review'] },
+    review: { to: 'review', from: ['in_progress'] },
+    done: { to: 'done', from: ['ready', 'in_progress', 'blocked', 'review'] },
+    cancel: { to: 'cancelled', from: ['proposed', 'ready', 'in_progress', 'blocked', 'review'] },
+  }
+
+  /**
+   * A value written back into the registry as a quoted scalar. Everything these commands write
+   * that is not an id or a date is prose — a reason, an actor — and prose meets `:` and `#`
+   * sooner or later. verifyWrite reads the result back through the same parser, so a quoting
+   * mistake fails the write rather than corrupting the file, but it should not get that far.
+   */
+  const yamlString = v => `"${String(v).replace(/\\/g, '\\\\').replace(/"/g, '\\"').replace(/\s*\n\s*/g, ' ').trim()}"`
 
   // ---------------------------------------------------------------- the --json contract
   //
@@ -296,7 +372,12 @@ export function runTaskCommand (argv = [], { cwd = process.cwd(), today = isoDat
     }
     for (const [k, v] of Object.entries(t)) if (!(k in out)) out[k] = v
     out.actionable = isActionable(t, byId)
-    out.waitingOn = out.blockedBy.filter(b => byId.get(b)?.status !== 'done')
+    out.waitingOn = unresolvedBlockers(t, byId)
+    // The §8 spelling, always present, so a caller need not know `todo` is an alias to group by
+    // state. `status` stays exactly what the file says — this is a reading of it, not a
+    // correction of it, and rewriting the registry's own word would hide the alias from the
+    // one consumer able to report it.
+    out.canonicalStatus = canonicalTaskStatus(t.status)
     return out
   }
 
@@ -340,7 +421,9 @@ export function runTaskCommand (argv = [], { cwd = process.cwd(), today = isoDat
 
     const lint = runLint(root, TODAY)
     const ready = list.filter(t => isActionable(t, byId)).sort(byPriority)
-    const stuck = list.filter(t => t.status === 'blocked' && !isActionable(t, byId))
+    const stuck = list.filter(t => isStuck(t, byId))
+    const review = list.filter(t => statusOf(t) === 'review').sort(byPriority)
+    const proposed = list.filter(t => statusOf(t) === 'proposed').sort(byPriority)
 
     if (asJson) {
       return emit({
@@ -355,6 +438,11 @@ export function runTaskCommand (argv = [], { cwd = process.cwd(), today = isoDat
         // Truncation is a decision about a terminal, and a caller cannot undo it.
         ready: ready.map(t => taskJson(t, byId)),
         blocked: stuck.map(t => taskJson(t, byId)),
+        // The two states §8 added that are neither startable nor finished. An agent asking what
+        // needs a human gets `proposed`; one asking what needs checking gets `review`. Both are
+        // additive — a caller reading `ready` and `blocked` is unaffected.
+        review: review.map(t => taskJson(t, byId)),
+        proposed: proposed.map(t => taskJson(t, byId)),
       })
     }
 
@@ -383,21 +471,31 @@ export function runTaskCommand (argv = [], { cwd = process.cwd(), today = isoDat
       console.log(`  lint               ${c.error} error(s), ${c.warn} warning(s), ${c.info} info`)
     }
 
-    if (ready.length) {
-      console.log('\n  Ready to start')
-      for (const t of ready.slice(0, 5)) {
-        console.log(`    ${pad(t.id, 10)} ${pad(t.priority ?? '', 7)} ${t.title}`)
-      }
-      if (ready.length > 5) console.log(`    … and ${ready.length - 5} more`)
+    /** One pane, truncated to five — the count is already on the tasks line above. */
+    const pane = (heading, rows, line) => {
+      if (!rows.length) return
+      console.log(`\n  ${heading}`)
+      for (const t of rows.slice(0, 5)) console.log(`    ${line(t)}`)
+      if (rows.length > 5) console.log(`    … and ${rows.length - 5} more`)
     }
 
-    if (stuck.length) {
-      console.log('\n  Blocked')
-      for (const t of stuck) {
-        const on = (Array.isArray(t.blockedBy) ? t.blockedBy : []).filter(b => byId.get(String(b))?.status !== 'done')
-        console.log(`    ${pad(t.id, 10)} waiting on ${on.join(', ') || '—'}`)
-      }
-    }
+    pane('Ready to start', ready, t => `${pad(t.id, 10)} ${pad(t.priority ?? '', 7)} ${t.title}`)
+    pane('In review — check the acceptance criteria, then close or send it back', review,
+      t => `${pad(t.id, 10)} ${pad(t.priority ?? '', 7)} ${t.title}`)
+
+    // A stuck task whose status is not `blocked` says so on its own line rather than being
+    // silently folded in: §8 makes the two imply each other, so the disagreement is a finding
+    // about the file, and printing it as though it were an ordinary blocked task would hide it.
+    pane('Blocked', stuck, t => {
+      const on = unresolvedBlockers(t, byId).join(', ') || '—'
+      const s = statusOf(t)
+      return `${pad(t.id, 10)} waiting on ${on}${s === 'blocked' ? '' : `   (status says "${t.status}")`}`
+    })
+
+    pane('Proposed — nobody has accepted these yet', proposed,
+      t => `${pad(t.id, 10)} ${pad(t.priority ?? '', 7)} ${t.title}`)
+    if (proposed.length) console.log('    a human accepts one with:  nytka task accept <id> --by human:<you>')
+
     console.log()
   }
 
@@ -409,7 +507,26 @@ export function runTaskCommand (argv = [], { cwd = process.cwd(), today = isoDat
     // on gets one key to read either way, and "nothing is ready" is an answer, not a failure —
     // which is why this stays exit 0.
     if (asJson) return emit({ task: ready.length ? taskJson(ready[0], byId) : null })
-    if (!ready.length) { console.log('\n  nothing is ready — everything is blocked, done, or in progress\n'); return }
+    if (!ready.length) {
+      // The old line was "everything is blocked, done, or in progress", which named three
+      // states out of seven and was a guess even about those. Count what is actually in the
+      // file: with `proposed` and `review` in the vocabulary, "nothing is ready" now has
+      // answers that are somebody's next move rather than a dead end.
+      const open = s => list.filter(t => statusOf(t) === s).length
+      console.log('\n  nothing is ready to start')
+      const rows = [
+        ['proposed', open('proposed'), 'waiting on a human — nytka task accept <id> --by human:<you>'],
+        ['review', open('review'), 'finished, waiting on an acceptance-criteria check'],
+        ['in_progress', open('in_progress'), 'already being worked'],
+        ['blocked', list.filter(t => isStuck(t, byId)).length, 'waiting on something else in this file'],
+      ].filter(([, n]) => n > 0)
+      if (rows.length) {
+        console.log()
+        for (const [name, n, why] of rows) console.log(`    ${pad(n, 3)} ${pad(name, 12)} ${why}`)
+      }
+      console.log()
+      return
+    }
     const t = ready[0]
     console.log(`\n  ${t.id}  ${t.title}`)
     console.log(`  priority ${t.priority ?? 'unset'} · owner ${t.owner ?? 'unassigned'}\n`)
@@ -417,13 +534,17 @@ export function runTaskCommand (argv = [], { cwd = process.cwd(), today = isoDat
     console.log(`  nytka task start ${t.id}  mark it in progress\n`)
   }
 
-  function cmdTask (sub, id, arg) {
+  function cmdTask (args) {
+    const [sub, id, arg, ...rest] = args
     const { list } = loadTasks()
     const byId = new Map(list.map(t => [String(t.id), t]))
 
     if (!sub || sub === 'list') {
       const want = flag('status')
-      const rows = list.filter(t => !want || t.status === want)
+      // Alias-aware in both directions: `todo` and `ready` name one state, so asking for either
+      // returns both. A filter that answered "no task has status ready" over a file full of
+      // `todo` would be the same wrong-and-believable answer this whole change is about.
+      const rows = list.filter(t => !want || canonicalTaskStatus(t.status) === canonicalTaskStatus(want))
       // The filter is echoed back because an empty result has two causes — a backlog with no
       // such task, and a status nobody uses. The human branch below disambiguates them in prose;
       // for a caller, seeing what it actually asked for does the same job.
@@ -439,10 +560,14 @@ export function runTaskCommand (argv = [], { cwd = process.cwd(), today = isoDat
       }
       console.log()
       for (const t of rows) {
-        const mark = isActionable(t, byId) && t.status !== 'in_progress' ? '>' : ' '
+        // `?` is the second half of §8's rule, made visible in the list: an open task waiting on
+        // something, whose status does not say `blocked`. It is not startable and it is not
+        // stuck-by-declaration, so before this it looked exactly like an ordinary queued task.
+        const mark = isActionable(t, byId) ? '>' : (isStuck(t, byId) && statusOf(t) !== 'blocked' ? '?' : ' ')
         console.log(`  ${mark} ${pad(t.id, 10)} ${pad(t.status, 13)} ${pad(t.priority ?? '', 7)} ${t.title}`)
       }
-      console.log(`\n  ${rows.length} task(s)   > = ready to start\n`)
+      const odd = rows.some(t => isStuck(t, byId) && statusOf(t) !== 'blocked')
+      console.log(`\n  ${rows.length} task(s)   > = ready to start${odd ? '   ? = blockers open, status says otherwise' : ''}\n`)
       return
     }
 
@@ -452,11 +577,23 @@ export function runTaskCommand (argv = [], { cwd = process.cwd(), today = isoDat
       if (asJson) return emit({ task: taskJson(t, byId) })
       console.log(`\n  ${t.id}  ${t.title}\n`)
       for (const k of ['status', 'priority', 'owner', 'repo', 'created', 'updated']) {
-        if (t[k] != null && t[k] !== '') console.log(`  ${pad(k, 12)} ${t[k]}`)
+        if (t[k] == null || t[k] === '') continue
+        // The alias is stated where the value is read, not corrected in place. §8 caps this at
+        // info for a checker; here it is one parenthesis on the line the reader is already on.
+        const note = k === 'status' && canonicalTaskStatus(t[k]) !== String(t[k])
+          ? `   (an alias for "${canonicalTaskStatus(t[k])}", SPEC §8)` : ''
+        console.log(`  ${pad(k, 12)} ${t[k]}${note}`)
+      }
+      // The fields §8 attaches to a state. They answer who committed to this work and why it
+      // stopped, which a record that shows only `status` cannot — and `acceptedBy` in
+      // particular is the whole difference between a task an agent suggested and one a human
+      // took on, so leaving it off the record made that distinction invisible where it is read.
+      for (const k of ['proposedBy', 'acceptedBy', 'reason', 'completionSummary']) {
+        if (t[k] != null && t[k] !== '') console.log(`  ${pad(k, 12)} ${String(t[k]).replace(/\s+/g, ' ').trim()}`)
       }
       const blockers = Array.isArray(t.blockedBy) ? t.blockedBy : []
       if (blockers.length) {
-        console.log(`  ${pad('blockedBy', 12)} ${blockers.map(b => `${b} (${byId.get(String(b))?.status ?? '?'})`).join(', ')}`)
+        console.log(`  ${pad('blockedBy', 12)} ${blockers.map(b => `${b} (${byId.get(String(b))?.status ?? 'not in this file'})`).join(', ')}`)
       }
       if (t.context) { console.log('\n  Context\n'); console.log(String(t.context).split('\n').map(l => '    ' + l).join('\n')) }
       if (Array.isArray(t.acceptanceCriteria)) {
@@ -467,16 +604,42 @@ export function runTaskCommand (argv = [], { cwd = process.cwd(), today = isoDat
       return
     }
 
-    if (sub === 'start' || sub === 'done' || sub === 'block') {
+    if (sub in TRANSITIONS) {
       if (!id) { console.error(`nytka: task ${sub} needs a task id`); throw new TaskUsageError() }
-      const status = sub === 'start' ? 'in_progress' : sub === 'done' ? 'done' : 'blocked'
-      const fields = { status, updated: TODAY }
+      const before = byId.get(String(id))
+      if (!before) { console.error(`nytka: no task ${id}`); throw new TaskUsageError() }
+
+      const move = TRANSITIONS[sub]
+      refuseTransition(before, sub, move)
+
+      const fields = { status: move.to, updated: TODAY }
       if (sub === 'block') {
-        const cur = (Array.isArray(byId.get(String(id))?.blockedBy) ? byId.get(String(id)).blockedBy : []).map(String)
+        const cur = (Array.isArray(before.blockedBy) ? before.blockedBy : []).map(String)
         if (arg && !cur.includes(String(arg))) cur.push(String(arg))
         fields.blockedBy = `[${cur.join(', ')}]`
       }
+      if (sub === 'accept') {
+        // Written before `status`, so the registry reads in the order §8 describes: a task is
+        // accepted, and that is what makes it `ready`.
+        delete fields.status
+        fields.acceptedBy = yamlString(acceptedBy())
+        // §8 requires a non-empty `owner` from `ready` onward — a proposal has no champion, and
+        // the transition is where it acquires one. The accepting human is the default because
+        // that is what accepting means; --owner is for handing it to someone else.
+        const owner = flag('owner') ?? acceptedBy().replace(/^human:/, '')
+        if (!before.owner || String(before.owner).trim() === '') fields.owner = yamlString(owner)
+        else if (flag('owner')) fields.owner = yamlString(owner)
+        fields.status = move.to
+        fields.updated = TODAY
+      }
+      if (sub === 'cancel') fields.reason = yamlString(cancelReason())
+
       const t = setTaskFields(String(id), fields)
+
+      // Closing a task can free others, and `cancelled` frees them exactly as `done` does: §8
+      // makes both terminal, so a task waiting on a cancelled one is waiting on nothing.
+      const frees = sub === 'done' || sub === 'cancel'
+      const named = x => (Array.isArray(x.blockedBy) ? x.blockedBy : []).map(String).includes(String(id))
 
       if (asJson) {
         // Re-read after the write, so what is reported is what the file now says rather than
@@ -486,32 +649,138 @@ export function runTaskCommand (argv = [], { cwd = process.cwd(), today = isoDat
         // itself and for what closing the task freed.
         const after = loadTasks()
         const afterById = new Map(after.list.map(x => [String(x.id), x]))
-        // Tasks that named this one as a blocker. Only `done` can free them, so start and block
-        // report [] — which is true, not a hole in the shape.
-        const freed = sub !== 'done' ? [] : after.list
-          .filter(x => (Array.isArray(x.blockedBy) ? x.blockedBy : []).map(String).includes(String(id)))
+        // Tasks that named this one as a blocker. Only a terminal status can free them, so the
+        // other verbs report [] — which is true, not a hole in the shape.
+        const freed = frees ? after.list.filter(named) : []
         return emit({
           task: taskJson(afterById.get(String(t.id)), afterById),
           unblocked: freed.map(x => taskJson(x, afterById)),
         })
       }
 
-      console.log(`\n  ${t.id} -> ${status}   (updated ${TODAY})`)
-      if (sub === 'done') {
-        const unblocked = list.filter(x => (Array.isArray(x.blockedBy) ? x.blockedBy : []).map(String).includes(String(id)))
+      console.log(`\n  ${t.id} -> ${move.to}   (updated ${TODAY})`)
+
+      // Starting something whose blockers are still open is allowed — a person may know why —
+      // but it leaves the file saying two things at once, and lint now reports that. Say so
+      // here rather than letting the finding arrive from somewhere else later.
+      if (move.to === 'in_progress') {
+        const open = unresolvedBlockers(before, byId)
+        if (open.length) {
+          console.log(`\n  note: ${open.join(', ')} ${open.length === 1 ? 'is' : 'are'} still open — §8 reads that as \`blocked\`,`)
+          console.log('        so lint will report the disagreement until one of the two changes.')
+        }
+      }
+      if (frees) {
+        const unblocked = list.filter(named)
         if (unblocked.length) {
-          console.log('\n  now unblocked (set them to todo when you are ready):')
+          console.log('\n  now unblocked (set them to ready when you are ready to start them):')
           for (const x of unblocked) console.log(`    ${pad(x.id, 10)} ${x.title}`)
+        }
+      }
+      if (sub === 'done') {
+        // §8 requires both to ENTER `done`, and this is the transition, so the requirement is
+        // live rather than retroactive. The command does not refuse — a registry may carry the
+        // record in prose, and refusing would push people to hand-edit the status instead,
+        // which is how a rule gets routed around rather than followed.
+        const missing = ['completionSummary', 'evidence'].filter(k => {
+          const v = before[k]
+          return v == null || v === '' || (Array.isArray(v) && !v.length)
+        })
+        if (missing.length) {
+          console.log(`\n  §8 requires ${missing.join(' and ')} to close a task. Add ${missing.length === 1 ? 'it' : 'them'} to`)
+          console.log(`  ${relative(ROOT, tasksPath())} — "done" with no evidence is the judgment call acceptanceCriteria removes.`)
+        }
+        if (statusOf(before) !== 'review') {
+          console.log(`\n  closed straight from ${before.status} — §8 routes finishing through \`review\`, which is what`)
+          console.log('  stops "done" being assessed by whoever did the work.')
         }
         console.log('\n  before closing: did anything here become a decision, a procedure,')
         console.log('  research, or a change to current-state.md? Distil it now or lose it.')
+      }
+      if (sub === 'review') {
+        console.log('\n  check every acceptance criterion against the live system, then:')
+        console.log(`    nytka task done ${t.id}     every criterion met, with evidence`)
+        console.log(`    nytka task start ${t.id}    one failed — §8 sends it back rather than closing it`)
       }
       console.log()
       return
     }
 
     console.error(`nytka: unknown task subcommand "${sub}"`)
+    console.error(`       expected list, show, ${Object.keys(TRANSITIONS).join(', ')}`)
     throw new TaskUsageError()
+
+    // ---------------------------------------------------------------- transition guards
+
+    /** `--by`, required and required to name a person. */
+    function acceptedBy () {
+      const by = flag('by')
+      if (!by) {
+        console.error('nytka: task accept needs the human accepting it:  --by human:<id>')
+        console.error('       SPEC §8 puts a human: actor in `acceptedBy` before a task leaves `proposed`.')
+        console.error('       It records who committed to the work, not who ran the command, which is')
+        console.error('       why nothing here derives it from project.yaml.')
+        throw new TaskUsageError()
+      }
+      if (!by.startsWith('human:')) {
+        console.error(`nytka: --by must name a person, as human:<id> — "${by}" is an actor but not a human.`)
+        console.error('       §8 admits `process:` and model ids elsewhere; acceptance is the one field')
+        console.error('       they cannot fill, because it is what tells a committed task from a suggested one.')
+        throw new TaskUsageError()
+      }
+      return by
+    }
+
+    /** `--reason`, or everything after the id. Required: §8 requires it to enter `cancelled`. */
+    function cancelReason () {
+      const reason = flag('reason') ?? [arg, ...rest].filter(Boolean).join(' ').trim()
+      if (!reason) {
+        console.error('nytka: task cancel needs a reason:  nytka task cancel <id> --reason "…"')
+        console.error('       §8 requires it. Without one a backlog forgets what it already rejected')
+        console.error('       and proposes it again.')
+        throw new TaskUsageError()
+      }
+      return reason
+    }
+
+    /** Refuse the transitions §8 does not have, and say which rule refused. */
+    function refuseTransition (t, verb, move) {
+      const from = statusOf(t)
+      if (move.from.includes(from)) return
+      // A status this vocabulary does not know is not grounds for refusing to move the task.
+      // §13 is explicit that a consumer must not reject a project over an unknown task status,
+      // and a command that refused to act on one would be that rejection in miniature — it
+      // would also strand every task in a registry that spells its states differently. Lint
+      // reports the unknown value at `warn`; here it simply does not stop the work.
+      if (!TASK_STATUSES.includes(from)) return
+
+      const say = lines => { for (const l of lines) console.error(l); throw new TaskUsageError() }
+      if (from === 'proposed') {
+        say([
+          `nytka: ${t.id} is proposed — no task leaves \`proposed\` without a human recorded in`,
+          '       `acceptedBy` (SPEC §8). Agents may create tasks and may promote none of them.',
+          `         nytka task accept ${t.id} --by human:<you>`,
+        ])
+      }
+      if (CLOSED_TASK_STATUSES.has(from)) {
+        say([
+          `nytka: ${t.id} is ${t.status} — §8 gives that state no exit. A closed record is dated`,
+          '       evidence, and reopening it rewrites what was true when it closed. If the work is',
+          '       back on, the honest record is a new task that names this one.',
+        ])
+      }
+      if (verb === 'accept') {
+        say([
+          `nytka: ${t.id} is ${t.status}, not proposed — there is no proposal to accept.`,
+          '       `accept` is the proposed -> ready transition and nothing else; a task already in',
+          '       the plan was accepted when it got there.',
+        ])
+      }
+      say([
+        `nytka: ${t.id} is ${t.status}, and §8 has no ${from} -> ${move.to} transition.`,
+        `       ${move.to} is reached from: ${move.from.join(', ')}.`,
+      ])
+    }
   }
 
   function cmdContext (id) {
@@ -554,8 +823,20 @@ export function runTaskCommand (argv = [], { cwd = process.cwd(), today = isoDat
     out.push('## The task', '')
     out.push(`- **id** ${t.id}`)
     out.push(`- **status** ${t.status}${t.priority ? ` · **priority** ${t.priority}` : ''}${t.owner ? ` · **owner** ${t.owner}` : ''}`)
+    if (t.acceptedBy) out.push(`- **acceptedBy** ${t.acceptedBy}`)
+    else if (t.proposedBy) out.push(`- **proposedBy** ${t.proposedBy}`)
     const blockers = Array.isArray(t.blockedBy) ? t.blockedBy : []
     if (blockers.length) out.push(`- **blockedBy** ${blockers.join(', ')}`)
+    // This document is what an agent is handed before it starts work, so the one state in which
+    // it must not start is stated in it rather than left to be inferred from a status field.
+    if (statusOf(t) === 'proposed') {
+      out.push('', '> **This task is `proposed` — nobody has accepted it.** Do not start work on it.',
+        '> SPEC §8: a task leaves `proposed` only when a human is recorded in `acceptedBy`, and',
+        '> an agent may propose work and promote none of it. Read it, add to it, leave the status.')
+    }
+    if (unresolvedBlockers(t, byId).length) {
+      out.push('', `> **Still waiting on ${unresolvedBlockers(t, byId).join(', ')}.** Those are open in this registry.`)
+    }
     if (t.context) out.push('', String(t.context).trim())
     if (Array.isArray(t.acceptanceCriteria)) {
       out.push('', '**Acceptance criteria**', '')
@@ -725,14 +1006,15 @@ export function runTaskCommand (argv = [], { cwd = process.cwd(), today = isoDat
   const [cmd, a, b, c] = positional
   if (flagErrors.length) {
     for (const e of flagErrors) console.error(`nytka: ${e}`)
-    console.error('       options are --json, --status <value> and --today <YYYY-MM-DD>\n')
+    console.error('       options are --json, --status <value>, --today <YYYY-MM-DD>,')
+    console.error('       --by human:<id>, --owner <who> and --reason <text>\n')
     return 2
   }
   try {
     switch (cmd) {
       case 'status': case undefined: cmdStatus(); return 0
       case 'next': cmdNext(); return 0
-      case 'task': cmdTask(a, b, c); return 0
+      case 'task': cmdTask(positional.slice(1)); return 0
       case 'context': cmdContext(a); return 0
       case 'init': cmdInit(a); return 0
       case 'lint': return cmdLint(a)

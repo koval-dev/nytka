@@ -44,9 +44,16 @@ Load those only when a task points at them.
 Tracker mode is declared in `project.yaml → tasks.tracker`.
 
 - **`file`** — `tasks/tasks.yaml` is authoritative. Set `status`, add `updated`, then check
-  whether anything in `blockedBy` can move `blocked` → `todo`.
+  whether anything in `blockedBy` can move `blocked` → `ready`.
 - **external tracker** — the tracker owns status. Update through it, never by editing a
   file. Generated snapshots are read-only; if they disagree with the tracker, the tracker wins.
+
+Statuses are `proposed | ready | in_progress | blocked | review | done | cancelled`. SPEC §8
+names what moves a task between them and which fields each state requires; `todo` is an alias
+for `ready`.
+
+**Agents may create tasks and may not promote them.** A task an agent adds starts at `proposed`
+with `proposedBy`, and leaves only when a human is recorded in `acceptedBy`.
 
 Never maintain status in two places.
 

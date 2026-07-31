@@ -162,9 +162,16 @@ Zero errors. Nytka failing its own lint is the least defensible bug available.
 **Then reconcile `tasks/tasks.yaml` against what actually changed.** Any task whose context is
 now false, or whose acceptance criteria are met, is updated in the same commit as the work.
 
-This step is manual because it has to be: lint reads markdown frontmatter and does not open the
-registry, so a green lint run says nothing about whether the backlog is true. The failure is not
-hypothetical — the task for publishing this repo sat at `todo`, asserting "the repo exists but is
-private", for a day after the repo went public, through a clean lint and an accurate
-`current-state.md`. Both entry points were right and the backlog was wrong, which is the exact
-shape of rot the format exists to make visible.
+Statuses and the fields each one requires are SPEC §8. **Anything you add to the registry is
+`proposed`, carrying `proposedBy`** — reconciling means correcting what is now false and
+recording what you finished, never accepting your own suggestions. Only the owner moves a task
+out of `proposed`.
+
+This step is manual because it has to be. Since 2026-07-31 lint does open the registry, but only
+for form: the `todo` alias at `info`, a status outside §8 at `warn`, and whether `blocked` and an
+unresolved `blockedBy` agree. None of that can tell you a task's context has stopped being true.
+The failure is not hypothetical — the task for publishing this repo sat at `todo`, asserting "the
+repo exists but is private", for a day after the repo went public, through a clean lint and an
+accurate `current-state.md`. Both entry points were right and the backlog was wrong, which is the
+exact shape of rot the format exists to make visible, and no check added since would have caught
+it.
