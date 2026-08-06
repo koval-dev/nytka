@@ -516,12 +516,29 @@ tasks:
 
   - id: SPEC-003
     title: "Settle what artifacts/ is, now that its decision trigger has fired"
-    status: proposed
+    status: done
     proposedBy: claude-opus-5
+    acceptedBy: "human:mike"
     priority: medium
     owner: mike
     blockedBy: []
     context: |
+      Accepted and closed by the owner on 2026-07-31 in one move, as decision
+      0010-artifacts-holds-non-markdown-files.md. SPEC §3 gains an `artifacts/` subsection and
+      §9 names `datasets/payloads/`; three entries left unresolved.md.
+
+      **Criterion 4 was not met and was not descoped quietly.** The format still cannot express
+      a provenance claim whose source the reader cannot open. It is now its own unresolved.md
+      entry with a working rule and a trigger, which is where it should have been all along —
+      it was never really an `artifacts/` question, it is a §5 vocabulary question that the
+      artifacts case happened to surface. Closing on three of four with the fourth named and
+      relocated is deliberate; the alternative was rewriting the criterion to match the result.
+
+      The reason this closed by fiat rather than by a fourth case: the working rule had been in
+      production in two repos and six connectors since 2026-07-28. What kept it open was that
+      this repo authors the format, so adding a logo also read as a spec question — four SVGs
+      produced ~160 lines of metadata. That cost is this repo's, not the format's.
+
       Proposed by an agent on 2026-07-30 while reconciling this registry. Not committed work
       until a human accepts it — see decision 0006.
 

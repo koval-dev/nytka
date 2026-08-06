@@ -94,13 +94,32 @@ project-root/
 ├── research/            distilled conclusions with expiry
 ├── datasets/            registry of collected data (metadata committed, payloads not)
 ├── references/          external system identifiers, no credentials
-├── artifacts/           outputs worth referencing
+├── artifacts/           non-markdown files the project owns, input or output
 ├── history/             compressed timeline, superseded decisions, failed approaches
 └── private/             gitignored: contacts, account IDs, owner answers
 ```
 
 Only `project.yaml` and `AGENTS.md` are required. Everything else appears when real work
 needs it. An empty `research/` is better than a `research/` full of speculative filler.
+
+### `artifacts/`
+
+Holds the files the project owns that cannot carry frontmatter — inputs it consumes (logos,
+vendor PDFs, exported diagrams) as much as outputs it produced. Payloads are committed here,
+unlike `datasets/`, because these files are small, durable and canonical rather than large
+expiring evidence.
+
+Provenance lives in `artifacts/index.json` alongside them, one entry per file: `id`, `file`,
+`kind`, `summary`, `addedAt`, `source`, `status` (`current` · `superseded` · `draft`). A copy
+whose canonical original lives elsewhere prefixes `source` with `vendored:` — that names the
+direction of truth, which is what stops a copy being edited in place and quietly forking.
+
+**A file with no entry is legal and means unknown provenance.** Dropping a file in and
+registering it afterwards is the intended path; requiring the entry first would make the
+cheapest option leaving the file somewhere else entirely.
+
+A record of a change an agent made to an external system is an output and belongs here,
+carrying the before state, the after state, and the identifier needed to reverse it.
 
 ---
 
@@ -362,8 +381,9 @@ how a spec teaches people to ignore it.
 
 ## 9. Datasets
 
-Collected data is registered, not pasted. `datasets/index.json` is committed; payloads are
-gitignored.
+Collected data is registered, not pasted. `datasets/index.json` is committed; payloads live in
+`datasets/payloads/` and are gitignored. A payload is registered and queried by script, never
+read into an agent's context — the registry entry is what a reader consults.
 
 ```json
 {

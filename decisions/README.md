@@ -18,3 +18,4 @@ Format and superseding rules: [SPEC.md §6](../SPEC.md).
 | 0007 | [Execution fields stay out of the task record](0007-execution-fields-stay-out-of-the-task-record.md) | stable |
 | 0008 | [Five rules govern adding a lint check](0008-lint-check-rules.md) | stable |
 | 0009 | [A tracker snapshot is committed YAML, and the line may ship one generator](0009-tracker-snapshot-is-committed-yaml.md) | draft |
+| 0010 | [`artifacts/` holds the project's non-markdown files, input or output](0010-artifacts-holds-non-markdown-files.md) | stable |

@@ -12,98 +12,23 @@ not architecture — do not cite one as a decision.
 
 ---
 
-## Where do durable non-text files go, and how do they carry provenance?
+## Can provenance name a source the reader cannot open?
 
-**Status:** open
+**Status:** open — the one part of the `artifacts/` question
+[0010](decisions/0010-artifacts-holds-non-markdown-files.md) did not close
 
-Raised 2026-07-28 by the first real case: a logo for the line itself, followed by the
-observation that there will be many such files — screenshots, exported diagrams, vendor PDFs.
+The brand assets in `artifacts/` are canonical in a private repo, so their `source` names
+something no reader of this public repo can check. The claim is honest and permanently
+unverifiable by its audience, and the trust tiers have no way to say so: a `verified` entry
+means *someone checked*; it cannot mean *and you cannot*. Same shape wherever a package is
+public and its evidence is not — a client's analytics account, an internal wiki, a paid API.
 
-Two gaps, and the second is the structural one.
+**Working rule:** state the source accurately even when it is unreachable, and say in prose
+that it is unreachable. An uncheckable honest claim beats a checkable vague one.
 
-**`artifacts/` is undefined.** It appears twice in the whole repo: one line in `SPEC.md` §3
-(*"outputs worth referencing"*) and one row in `procedures/ingest.md` (*"A completed output →
-`artifacts/`"*). No section, no template directory, no rules — compare `datasets/`, which gets
-§9 and a schema. And a logo is not an *output*: the format sorts things into knowledge
-(`research/`), evidence (`datasets/`) and outputs (`artifacts/`), and has no category for a
-durable **input** the project consumes. Left as is, `artifacts/` becomes the junk drawer.
-
-**Nothing that is not markdown can carry provenance.** §5 requires frontmatter on markdown, and
-the entire trust model — `verified`, `confidence`, `stale_after`, the derived trust tiers —
-rides on it. A `.png` carries none of it, so a raw file in a folder is invisible to the format:
-no source, no date, no way to tell whether it is current. This is not a documentation gap; it
-is a hole in the thing the format exists to provide.
-
-`datasets/index.json` is the one existing answer to *"a file that cannot describe itself"* —
-but it was built for the opposite case. Payloads there are large, gitignored, expiring and
-queried by script. A logo is small, committed, canonical and does not expire. The registry
-shape transfers; the storage rule inverts.
-
-**Working rule:** raw files go in `artifacts/` in the repo that uses them, with an
-`artifacts/index.json` alongside carrying `id`, `file`, `summary`, `addedAt`, `source` and
-`status` — the `datasets/index.json` shape, payloads committed rather than ignored. Purely
-additive, so §13 liberal conformance keeps existing packages valid. `artifacts/index.json` in
-this repo is the worked instance; the entry shape it uses came from the private tools repo,
-where the rule was written first.
-
-**Decision trigger — fired 2026-07-30, both halves.** This repo took on brand assets vendored
-from elsewhere (second repo needing the same asset), and answering *"are these current?"*
-required comparing checksums by hand because no registry had an entry for them (an agent asking
-that question of something with no frontmatter). Still open, because firing the trigger is what
-schedules the decision, not what makes it.
-
-What the exercise established, for whoever writes that decision:
-
-- **An empty registry is worse than no registry.** It reads as "nothing here" rather than
-  "nobody filled this in", and nothing detects the difference. A registry that is created and
-  never filled is the likely default outcome, so whatever §3 gains has to make filling it the
-  cheaper option.
-- **`artifacts/` is holding two unlike things.** §3 calls it *"outputs worth referencing"*; a
-  logo is a durable **input** the project consumes. The working rule covers both, the spec
-  sentence covers one. Compounds with the external-mutation question below, which proposes
-  `artifacts/` as the home for a third unlike thing.
-- **A vendored copy needs a direction-of-truth field.** The canonical side needs to name every
-  repo holding a copy, so superseding an asset is not guesswork; the derived side has nowhere to
-  say *"this is a copy — replace it from there, never edit it here"* except prose in a `summary`.
-  This repo encodes it as a `vendored:` prefix inside `source`, which works and is specified
-  nowhere.
-- **Provenance across a visibility boundary is unsolved.** These copies are canonical in a
-  private repo, so `source` names something no reader of this repo can open. The claim is honest
-  and permanently uncheckable by its audience — which the trust tiers have no way to express. A
-  `verified` entry means "someone checked"; it cannot say "and you cannot."
-
-Settle it before a loader is built against whatever `artifacts/` turns out to mean.
-
-The trigger previously named FMT-003 — the hand-run gate — as where this friction would
-surface. That gate was removed and FMT-003 closed on 2026-07-28; friction now surfaces in the
-work that hits it, which is what the three entries below are.
-
----
-
-## Is there a category for collected data that is registered but never read?
-
-**Status:** open
-
-Raised 2026-07-28 by the first connectors, which had nowhere in the format to put what they
-collected.
-
-`datasets/` and its `index.json` are specified (§9) and the registry works. What is not
-specified is where the **payload** goes — the raw API response a connector fetched, which may
-be megabytes, is regenerable, expires, and must **never** be loaded into an agent's context.
-The spec's categories all assume something is meant to be read: `research/` is knowledge,
-`artifacts/` is outputs, `datasets/` is evidence a human or agent consults.
-
-`datasets/payloads/` was invented outside this repo to hold it, along with the rule that a
-payload is registered and queried by script but never read into context. That rule is doing
-real work and is written down nowhere normative.
-
-**Working rule:** payloads go in `datasets/payloads/`, gitignored, registered in
-`datasets/index.json`, and never loaded into an agent's context. The registry entry — not the
-payload — is what a reader consults.
-
-**Decision trigger:** the second independent implementation of a connector, or the first time
-an agent loads a payload into context because nothing told it not to. Additive either way, so
-§13 liberal conformance holds.
+**Decision trigger:** the first time a reader acts on a claim they could not verify and were
+not told they could not, or the second package that needs the same prose disclaimer. Either
+means the vocabulary needs a reachability field rather than a paragraph.
 
 ---
 
@@ -157,32 +82,6 @@ invent a `partially_superseded_by` field for a sample of one.
 or the first time someone acts on a stale consequence because the record it lives in still reads
 as current. The second is the failure this entry predicts; if it happens, the format needs a
 forward link and the argument for it will be concrete.
-
----
-
-## Where does a record of an external mutation live?
-
-**Status:** open
-
-The format is built around **collecting**: `datasets/` with `collectedAt` and `validUntil`,
-provenance describing what was read and when. It has no shape for *"an agent changed something
-in a system outside this repo — here is the before state, the after state, and what is needed
-to reverse it."*
-
-Raised 2026-07-28 when the first write-capable connector was specified. The nearest fit is
-`artifacts/`: a mutation record is an output, but one whose entire value is auditability, which
-is not what `artifacts/` was described for. Registering it in `datasets/` would be worse — a
-change is not an observation, and it has no payload and no validity window.
-
-This compounds with the first question above. `artifacts/` is already the least specified
-directory in the format, and it is now the proposed home for two unlike things.
-
-**Working rule:** `artifacts/`, carrying the before state, the after state, and the identifier
-needed to reverse the change.
-
-**Decision trigger:** the first mutation run against a real external system. If `artifacts/`
-carries it comfortably, this closes as a note in SPEC §3; if it does not, the format needs a
-category and that run is the evidence for it.
 
 ---
 

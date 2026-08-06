@@ -44,10 +44,12 @@ logomark's filename differs.
 `current` (use this one) · `superseded` (kept so an old copy in the wild can be identified) ·
 `draft` (not approved for use).
 
-## Open question
+## What this directory is
 
-What `artifacts/` is *for* is not settled — SPEC §3 describes it as "outputs worth referencing",
-and a logo is a durable **input** the project consumes. See
-[unresolved.md](../unresolved.md) and the proposed task in
-[tasks/tasks.yaml](../tasks/tasks.yaml). The entry shape used here follows the working rule in
-`unresolved.md`, not a normative section, because there isn't one yet.
+Settled 2026-07-31 by [0010](../decisions/0010-artifacts-holds-non-markdown-files.md): SPEC §3
+now defines `artifacts/` as the project's non-markdown files, input or output, with the entry
+shape used here promoted from working rule to normative. A file with no entry is legal and
+reads as unknown provenance — register it when you know, not before.
+
+One part stayed open: `source` here names a private repo, and nothing in the vocabulary can say
+*"this claim is not checkable by you."* See [unresolved.md](../unresolved.md).

@@ -50,7 +50,7 @@ is `adopt-existing.md`; every one after is this.
 | Status, blockers, what is next | `current-state.md` |
 | Work that must happen, or that just stopped being needed | the task registry in `project.yaml → tasks` |
 | A question with no answer yet | `unresolved.md` |
-| A completed output | `artifacts/` |
+| A file that is not markdown — an output, or a durable input the project consumes | `artifacts/` + an `index.json` entry (SPEC §3) |
 | A milestone or failed approach | `history/timeline.md` |
 
 The task row is easy to skip because the row above it looks like it covers the same ground. It

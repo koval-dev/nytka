@@ -147,8 +147,13 @@ markdown frontmatter, so migration is a rename.
 
 A connector is tooling, not an adopting project, so the parts only a second adopter would
 stress are still untested — agent-reported numbers chief among them. `artifacts/` came off that
-list on 2026-07-30: it is now carrying real assets in two repos, which fired the decision trigger
-on what it is actually for. It is exercised, not settled. See [unresolved.md](unresolved.md).
+list: it carries real assets in two repos, and SPEC §3 now says what it holds
+([0010](decisions/0010-artifacts-holds-non-markdown-files.md)). See
+[unresolved.md](unresolved.md) for what is still open.
+
+**The spec is frozen at v0.1 as of 2026-07-31.** It changes when a real project breaks against
+it, not when this repo thinks of something. Five days of format work produced 33 commits and
+four times more prose about the spec than spec; what v0.1 needs now is use.
 
 Nytka manages itself under its own rules — `project.yaml`, `decisions/` and `current-state.md`
 in this repo are the dogfood, and the first bug reports.
