@@ -31,12 +31,13 @@ npm; their source repo is private.** They are built separately so this repo stay
 nothing installed — you never need their source to use either lane.
 
 ```
-npx @nytka/cli lint .        # the released build of tools/nytka-lint.mjs, nothing to clone
-npx @nytka/cli add plugin-gsc
+npx @nytka/cli lint .              # the released build of tools/nytka-lint.mjs, nothing to clone
+npm search keywords:nytka-plugin   # which connectors exist
+npx @nytka/cli add gsc             # install one
 ```
 
 The two lanes are the same format. Nothing here requires the packages, and the packages do not
-replace anything here. Verified 2026-07-29 against the npm registry.
+replace anything here. Verified 2026-08-06 against the npm registry.
 
 ## The problem it solves
 
@@ -114,6 +115,25 @@ Two more govern the resource none of them can replace — a person's attention.
 back, executable with nothing installed. [ask-the-owner](procedures/ask-the-owner.md) is when an
 agent may interrupt a human, and the shape a question or a report has to take to be worth reading.
 
+## Connectors
+
+Real data comes from connectors, not from an agent's recollection. Three commands, and the
+first one is the catalogue:
+
+```
+npm search keywords:nytka-plugin   # what exists — the registry is the list
+npx @nytka/cli add gsc             # install one; writes .env.example, never .env
+npx @nytka/cli info                # what this project has, and which credentials it sees
+```
+
+**No list of connectors is committed in this repo.** One would be wrong the first time a
+package ships, and P3 says the live system is the truth. Six are published as of 2026-08-06 —
+run the search rather than trusting that number.
+
+[collect-data.md](procedures/collect-data.md) is the procedure: find a connector, install it,
+keep the credential out of the repo, and register what it collected so the figure carries a
+date. Connectors write into `datasets/`, whose payloads an agent must never read into context.
+
 ## Lint
 
 ```
@@ -131,10 +151,15 @@ on release and drift-tested. Do not edit them here, and **copy the directory rat
 file out of it**: they import each other by relative path, which needs no `node_modules` but
 does need its siblings.
 
-Between releases the committed copies can be *ahead* of the published package, and today they
-are — `node tools/nytka-lint.mjs` and `npx @nytka/cli lint` currently disagree on the same
-directory. Same source, two release schedules. [current-state.md](current-state.md) says what
-the gap is and when it closes.
+Between releases the committed copies can drift from the published package in either direction
+— same source, two release schedules. As of 2026-08-06 they agree: `node tools/nytka-lint.mjs`
+and `npx @nytka/cli check` report the same result on this directory. That is a dated
+observation; [current-state.md](current-state.md) carries it with its evidence.
+
+The vendored `tools/nytka.mjs` is deliberately the smaller command set. `add`, `info` and
+`upgrade` install or inspect packages, so they belong to the lane where something is installed
+and ship only in `@nytka/cli` — they are not missing from `tools/`, they are out of scope for a
+directory that must run with nothing installed.
 
 Lint is the operation most projects skip and the one that pays. Nearly every knowledge
 failure in a real project is something it would have flagged.

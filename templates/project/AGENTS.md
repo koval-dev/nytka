@@ -19,9 +19,10 @@ Format: https://github.com/koval-dev/nytka
 Do **not** auto-scan: `research/`, `history/`, `datasets/` payloads, archive folders.
 Load those only when a task points at them.
 
-**The loop itself is `nytka/procedures/work-a-task.md`** — read the state, pick one task, check
-its context is still true, work, hand it back for review. Every step is a file edit; nothing
-needs installing beyond the linter.
+**The loop itself is
+[work-a-task.md](https://raw.githubusercontent.com/koval-dev/nytka/main/procedures/work-a-task.md)**
+— read the state, pick one task, check its context is still true, work, hand it back for
+review. Every step is a file edit; nothing needs installing beyond the linter.
 
 <!-- The exclusions matter more than the order. An agent that reads everything
      every session burns its context on knowledge it does not need. -->
@@ -58,7 +59,7 @@ Handing back a `review` task follows the same rule: per acceptance criterion, ho
 or why it was not, then the one thing most likely to be wrong. Never "let me know if this is ok".
 
 Full procedure, including what to do with a question that cannot be answered yet:
-`nytka/procedures/ask-the-owner.md`.
+[ask-the-owner.md](https://raw.githubusercontent.com/koval-dev/nytka/main/procedures/ask-the-owner.md).
 
 ## Task state
 
@@ -77,6 +78,26 @@ for `ready`.
 with `proposedBy`, and leaves only when a human is recorded in `acceptedBy`.
 
 Never maintain status in two places.
+
+## Tools and data sources
+
+"Tools" here means nytka connectors — not your agent's built-in ones. Real data comes from a
+connector, never from an agent's recollection.
+
+```
+npm search keywords:nytka-plugin   what exists — a catalogue, not an endorsement
+npx @nytka/cli add <name>          installs a real package — confirm with the owner first
+npx @nytka/cli info                what this project has, and the credentials it sees
+```
+
+That keyword is self-declared and anyone may publish under it. `@nytka/*` is the maintained
+line; anything else is third-party and gets read before it gets installed. Writing your own is
+a supported path — give it the same keyword and it appears in the same search for everyone.
+
+Record what this project uses in `references/systems.yaml`, connector package included. Never
+load a dataset payload into context — query it with a script and write the conclusion into
+`research/`. Full procedure:
+[collect-data.md](https://raw.githubusercontent.com/koval-dev/nytka/main/procedures/collect-data.md).
 
 ## Recording evidence
 

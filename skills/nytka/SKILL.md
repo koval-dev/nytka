@@ -34,6 +34,7 @@ procedures below carry detail the spec deliberately leaves out.
 | Existing project with docs, notes, or chat history | `$NYTKA/procedures/adopt-existing.md` |
 | Already a nytka package, doing normal work | `$NYTKA/QUICKSTART.md` — reading order and traps |
 | New material to fold in | `$NYTKA/procedures/ingest.md` |
+| Needs real data from an external system | `$NYTKA/procedures/collect-data.md` |
 | Checking what rotted | `$NYTKA/procedures/lint.md` |
 
 Read the one that applies. Reading all of them is the mistake this table exists to prevent.

@@ -5,4 +5,11 @@
 # cms:
 #   projectId:
 #   dataset:
-#   authEnvVar: CMS_TOKEN        # the NAME of the variable, never its value
+#   connector: "@nytka/plugin-sanity"    # the package that reads it, if one exists
+#   authEnvVar: CMS_TOKEN                # the NAME of the variable, never its value
+
+# `connector` names the package, never a version — a name is an identifier and a version rots.
+# Which connectors exist is not recorded here or anywhere else in a file:
+#   npm search keywords:nytka-plugin     what exists
+#   npx @nytka/cli add <name>            install one
+# See nytka/procedures/collect-data.md.

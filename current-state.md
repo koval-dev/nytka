@@ -13,12 +13,14 @@ verified:
   - { by: claude-opus-5, at: 2026-07-31, against: task-management-skill-schema }
   - { by: claude-opus-5, at: 2026-07-31, against: lint-source }
   - { by: claude-opus-5, at: 2026-07-31, against: nytka-working-tree }
+  - { by: claude-opus-5, at: 2026-08-06, against: npm-registry }
+  - { by: claude-opus-5, at: 2026-08-06, against: kd-nytka-working-tree }
 confidence: inferred
 ---
 
 # Current state
 
-**Last updated:** 2026-07-31
+**Last updated:** 2026-08-06
 
 ## Current focus
 
@@ -33,6 +35,14 @@ decided where lint's source lives. Both lanes run the same conformance code.
 
 ## Active work
 
+- **DOC-002** — connectors were undiscoverable from a fresh project, reported by the owner on
+  2026-08-06: an agent asked *what tools do we have* answered about its own harness, then went
+  looking on the web for packages that were already on npm. The gap was documentation, not
+  code — `add` and `info` shipped in 0.4.2 and appeared in no file here, and the launcher skill
+  had no route for needing outside data. Fixed by
+  [collect-data.md](procedures/collect-data.md) plus a skill row; `proposed`, awaiting a human.
+  It is also the first bug reported against the *second* lane's discoverability rather than the
+  format.
 - **The daily loop is written** — [work-a-task.md](procedures/work-a-task.md), 2026-07-31, in
   `review`. Ten steps from reading the state to handing work back, every one a file edit with the
   commands shown only as accelerators. Its three additions to the loop as previously described are
@@ -125,10 +135,11 @@ None.
 | A freshly scaffolded package reports its own blanks | yes — 0 errors, 7 warnings | 2026-07-30 | `nytka init` into a temp dir |
 | Lint dependencies | 0 | 2026-07-27 | source |
 | `tools/` is four generated copies | yes — lint and the task commands both regenerated 2026-07-30. `tools/` was ahead of published 0.3.1 until 0.4.0/0.4.1 shipped the same day | 2026-07-30 | file headers + the source repo's drift check |
-| `npx @nytka/cli lint` runs the same checks | **not today** — 7 warnings here against 1 from 0.3.1, same directory | 2026-07-30 | both run against a fresh `init` scaffold |
+| `npx @nytka/cli check` runs the same checks | **yes as of 0.4.2** — both report 0 errors, 0 warnings, 0 info on this repo. The 0.3.1 gap recorded here on 2026-07-30 closed when 0.4.x shipped | 2026-08-06 | both run against this directory |
 | The task commands answer `--json` | yes in `tools/`; published 0.3.1 rejects the flag on five of them | 2026-07-30 | both run against this repo |
-| Published connectors | 6 (`gsc` 0.3.3, `ga4` 0.2.3, `sanity` 0.3.2, `gtm` 0.1.2, `dataforseo` 0.1.3, `ads` 0.1.1) | 2026-07-29 | npm registry |
-| Published runtime | `@nytka/cli` **0.4.1** — 0.4.0 shipped 2026-07-30 and 0.4.1 the same day; `@nytka/core` 0.1.0 as of 2026-07-29, not re-checked | 2026-07-30 | `npm view @nytka/cli version` |
+| Published connectors | 6 (`gsc` 0.3.3, `ga4` 0.2.3, `sanity` 0.3.2, `gtm` 0.1.2, `dataforseo` 0.1.3, `ads` 0.1.1) — unchanged since 2026-07-29, and all six carry the `nytka-plugin` keyword, which is what makes the registry search the catalogue | 2026-08-06 | `npm search keywords:nytka-plugin` |
+| Published runtime | `@nytka/cli` **0.4.2**, shipped 2026-07-31 — it adds `add`, `info` and `upgrade`, the first commands that exist only in the installed lane; `@nytka/core` 0.1.0 as of 2026-07-29, not re-checked | 2026-08-06 | npm registry |
+| `tools/` matches the source it is vendored from | yes — the drift check passes, and the four vendored files are `bin`/`tasks`/`lint`/`yaml`. `add`, `info` and `upgrade` are not among them by design: they install packages, so they belong to the other lane | 2026-08-06 | `npm run vendor -- --check` in the source repo — **which is private, so a reader of this repo cannot check this one.** The vendored files themselves are here and readable; the comparison is not |
 | ~~What installing 0.3.1 still gets you~~ | superseded — 0.3.1 and 0.4.0 both scaffold without `private/`, by two different mechanisms; 0.4.1 is the first release whose template tree is complete | 2026-07-30 | `npm pack @nytka/cli@0.4.1` and read it |
 | A connector has run against a live external system | yes, for five of six | 2026-07-29 | development repo's `current-state.md` |
 

@@ -1,5 +1,5 @@
 version: 1
-updated: "2026-07-31"
+updated: "2026-08-06"
 
 # Nytka's own backlog. Schema: SPEC.md §8.
 
@@ -809,3 +809,58 @@ tasks:
       - "node tools/nytka-lint.mjs . passes with zero errors"
     created: 2026-07-31
     updated: 2026-07-31
+
+  - id: DOC-002
+    title: "Make the published connectors discoverable from a project that has just been scaffolded"
+    status: proposed
+    proposedBy: claude-opus-5
+    priority: medium
+    owner: mike
+    blockedBy: []
+    context: |
+      Reported by the owner on 2026-08-06. A freshly initialised project was asked "what tools do
+      we have"; the agent answered about its own harness, and once narrowed down went looking on
+      the web for connectors that were already published on npm.
+
+      The cause is documentation, not code. `@nytka/cli` 0.4.2 shipped `add` and `info` on
+      2026-07-31 — the two commands that answer the question — and neither appears in any file in
+      this repo. `skills/nytka/SKILL.md` routes five situations and none of them is "this project
+      needs data from a system outside the repo", so the launcher the owner has installed had
+      nowhere to send the agent.
+
+      Re-vendoring `tools/` was considered and rejected on the evidence: the drift check passes,
+      and `add`/`info`/`upgrade` are absent from the vendored subset deliberately, because they
+      install packages and so belong to the lane where something is installed.
+
+      Two surfaces were needed, not one, because they reach different people. The launcher skill
+      is symlinked machine-global, so it is the only thing that reaches a project that already
+      exists — it gets a routing row, and `procedures/collect-data.md` is the target that makes
+      the row worth following. But a stranger has no skill installed and no checkout, so for a
+      fresh `nytka init` the only file their agent reads is `AGENTS.md`. That is why the template
+      gets a block too.
+
+      **The first pass of this task argued the opposite and was wrong.** It reasoned that which
+      connectors exist is an ecosystem fact rather than a project fact, so it belonged nowhere
+      near a project's `AGENTS.md`. That holds against a *list*, which rots the first time a
+      package ships and duplicates what the registry already says. It does not hold against a
+      *command*: `npm search keywords:nytka-plugin` is a pointer to the live system, which is P3
+      rather than a violation of P2. The objection had been applied to the wrong object, and it
+      optimised for the reader who already has the skill installed — the owner — rather than for
+      the stranger the task exists to serve.
+
+      No list of connectors is committed anywhere, and none should be. The keyword is also
+      self-declared and unowned, so the search returns a catalogue rather than an endorsement:
+      third-party connectors are a supported path by design — `add` takes any scope — and the
+      same openness means an agent must read a package before installing it.
+    acceptanceCriteria:
+      - "an agent in a scaffolded project can reach the connector catalogue without being told it exists"
+      - "the catalogue is a command against the live registry, not a list committed to a file"
+      - "procedures/collect-data.md covers finding, installing, crediting and registering, and says a payload is never read into context"
+      - "SPEC.md is unchanged — v0.1 is frozen and nothing here needs it"
+      - "a stranger who scaffolds with nytka init, installs no skill and clones nothing is told connectors exist, in a file their agent reads unprompted"
+      - "templates/project/AGENTS.md carries a command and a caveat, never a list of package names, and stays under SPEC §11's ~150 lines"
+      - "the search is described as a catalogue rather than an endorsement, and writing your own connector is documented as a supported path"
+      - "the stale claims this uncovered are corrected with a date and a source: README's lint-disagreement paragraph, and current-state's runtime version"
+      - "node tools/nytka-lint.mjs . passes with zero errors"
+    created: 2026-08-06
+    updated: 2026-08-06
