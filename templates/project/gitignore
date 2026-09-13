@@ -13,5 +13,12 @@ datasets/**/*.ndjson
 tasks/snapshot.md
 tasks/snapshot.json
 
+# Transient files the safe writer makes — the lock it holds while replacing a file, and the
+# temp file it renames over the target. Both live for milliseconds; they are listed so a
+# `git add -A` that races a write cannot commit one. Dot-prefixed patterns on purpose:
+# a bare `*.lock` would also swallow a real yarn.lock or Cargo.lock.
+.*.lock
+.*.tmp
+
 node_modules/
 .DS_Store

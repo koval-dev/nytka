@@ -812,7 +812,7 @@ tasks:
 
   - id: DOC-002
     title: "Make the published connectors discoverable from a project that has just been scaffolded"
-    status: proposed
+    status: done
     proposedBy: claude-opus-5
     priority: medium
     owner: mike
@@ -862,5 +862,42 @@ tasks:
       - "the search is described as a catalogue rather than an endorsement, and writing your own connector is documented as a supported path"
       - "the stale claims this uncovered are corrected with a date and a source: README's lint-disagreement paragraph, and current-state's runtime version"
       - "node tools/nytka-lint.mjs . passes with zero errors"
+    completionSummary: |
+      Two surfaces shipped. `procedures/collect-data.md` is the procedure; the launcher skill
+      routes to it, which reaches projects that already exist, and the template's `AGENTS.md`
+      carries a five-line block, which reaches projects that do not exist yet. The catalogue is
+      `npm search keywords:nytka-plugin` in both places and a list of package names in neither.
+
+      Closed straight from `ready` rather than through `review`, and the reason is not that the
+      step was skipped: the owner reviewed the work and decided to close it, which is the
+      external judgment `review` exists to obtain. What `review` protects against is the author
+      certifying their own work, and that did not happen here.
+
+      **The fix is complete in this repo and not yet in the world.** A stranger gets the block
+      through `nytka init`, which scaffolds from the copy of `templates/` inside `@nytka/cli`.
+      That copy is re-synced and committed as 0.4.3, but the release has not landed — CI failed
+      on a GitHub infrastructure error and was re-run. Until `npm view @nytka/cli version`
+      reports 0.4.3, criterion 5 is met in the source and unmet for the person it names.
+    evidence:
+      - "lint: 0 errors, 0 warnings, 0 info across 27 documents, from both the vendored linter
+         and npx @nytka/cli@0.4.2 check, run against this directory (2026-08-06)"
+      - "no committed list: `npm search keywords:nytka-plugin` returns 6, and no file in this
+         repo names them as a catalogue — the six appear only in current-state's dated snapshot"
+      - "SPEC.md unchanged: absent from the diff of commit 13e8a9a"
+      - "templates/project/AGENTS.md is 130 lines against SPEC §11's ~150"
+      - "the three raw procedure URLs in the template return HTTP 200, re-checked after the
+         push that created collect-data.md (2026-08-06)"
+      - "criterion 1 is NOT verified end to end. No live agent was observed reaching the
+         catalogue from a cold scaffold; what was checked is that the text is present in the
+         file an agent loads unprompted. The behavioural claim is inferred, not measured."
+      - "criterion 5 is NOT yet true for a stranger — see completionSummary. @nytka/cli on npm
+         was still 0.4.2 when this was closed"
+      - "criterion 5 is met as of 2026-09-13. npm view @nytka/cli version reports 0.4.4 and
+         0.4.3 is in the published list, so the release this was waiting on did land. Checked
+         against the tarball rather than the version number: the package installed from npm
+         into an empty directory carries `npm search keywords:nytka-plugin` at line 88 of
+         templates/project/AGENTS.md, and the collect-data link at line 100. The line above is
+         left as written — it was true on 2026-08-06 and is dated to it."
     created: 2026-08-06
     updated: 2026-08-06
+    acceptedBy: "human:mike"
