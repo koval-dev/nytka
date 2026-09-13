@@ -51,6 +51,7 @@ tools/nytka.mjs        status · next · task · context · init · lint     ←
 tools/nytka-tasks.mjs  what those commands do
 tools/nytka-lint.mjs   the format checks, also runnable directly
 tools/nytka-yaml.mjs   the one YAML reader, shared by both
+tools/nytka-write.mjs  the one safe writer — locking and atomic replacement
 ```
 
 They stay committed, dependency-free and runnable under bare `node`, because a reader who
@@ -61,8 +62,15 @@ vendoring possible at all, not politeness inherited from
 **They import each other by relative path, so keep them together.** Recorded as that repo's
 decision 0010, which traded a one-file rule for a single shared parser — until 2026-07-30 lint
 and the task commands each had their own, and the two disagreed. A relative import needs no
-`node_modules`, so the zero-install promise is unchanged; copying one file out of the four is
+`node_modules`, so the zero-install promise is unchanged; copying one file out of the set is
 what breaks now.
+
+The set grew to five on 2026-09-13. `nytka-write.mjs` is there because the task commands edited
+`tasks/tasks.yaml` in place with no lock: two of them running at once lost a transition in 39 of
+40 runs, and 32 of those ended with the registry recording neither while a command printed
+success and exited 0. It has nothing to do with the format, only with the tool not corrupting a
+file the format defines — which is why it arrived as a regenerated file here and no change to
+`SPEC.md` at all.
 
 Or install it and skip all of this: `npm i -g @nytka/cli`, then `nytka status` in any project.
 

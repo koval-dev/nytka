@@ -34,6 +34,7 @@ import { join, resolve, dirname, relative, basename } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
 import { parseYaml } from './nytka-yaml.mjs'
+import { withRegistryLock, writeFileAtomic } from './nytka-write.mjs'
 import {
   lintProject, formatReport, formatJson, isoDate,
   TASK_STATUSES, CLOSED_TASK_STATUSES, canonicalTaskStatus, unresolvedBlockers,
@@ -62,6 +63,31 @@ function templatesDir () {
     if (existsSync(c)) return c
   }
   return resolve(here, '..', 'templates', 'project')
+}
+
+/**
+ * Refuse to write when the record has changed since the caller read it.
+ *
+ * The transition guards — refuseTransition, and `block`'s read of the existing `blockedBy` —
+ * run against a snapshot taken before the lock was held. Without this, two sessions could each
+ * read `ready`, and the second would apply a transition from a state that no longer exists: a
+ * legal-looking edit derived from a stale premise. The lock closes the window during the write;
+ * this closes the window before it.
+ *
+ * Compared whole rather than on `status` alone, because `block` derives its new value from the
+ * old `blockedBy` and `accept` from the old `owner`. `__line` is non-enumerable in yaml.mjs, so
+ * a line offset moving does not read as a change.
+ */
+function requireUnchanged (id, found, expect, rel) {
+  if (JSON.stringify(found) === JSON.stringify(expect)) return
+  const changed = [...new Set([...Object.keys(expect), ...Object.keys(found)])]
+    .filter(k => JSON.stringify(expect[k]) !== JSON.stringify(found[k]))
+  throw new Error([
+    `${id} changed in ${rel} while this command was reading it — nothing was written.`,
+    ...changed.map(k => `  ${k}: expected ${JSON.stringify(expect[k] ?? null)}, found ${JSON.stringify(found[k] ?? null)}`),
+    '  Another session edited this registry. Read it again before retrying — the transition you',
+    '  asked for was decided against a record that no longer exists.',
+  ].join('\n'))
 }
 
 /**
@@ -211,12 +237,34 @@ export function runTaskCommand (argv = [], { cwd = process.cwd(), today = isoDat
   const daysBetween = (a, b) => Math.floor((Date.parse(b) - Date.parse(a)) / 86400000)
 
   // Surgical line edit — re-serialising would destroy comments and block scalars.
-  function setTaskFields (id, fields) {
-    const { file, list } = loadTasks()
+  //
+  // The whole cycle runs under one lock. See "writing the registry safely" above for the two
+  // failures that requires, and for what was measured.
+  function setTaskFields (id, fields, { expect } = {}) {
+    requireFileTracker()
+    const file = tasksPath()
+    const rel = relative(ROOT, file)
+    // Matches what loadTasks did with a missing registry — an empty list, so no task by that id.
+    if (!existsSync(file)) { console.error(`nytka: no task ${id}`); throw new TaskUsageError() }
+    return withRegistryLock(file, () => setTaskFieldsLocked(file, rel, id, fields, expect), {
+      label: rel,
+      onStale: (lock, age) => console.error(
+        `nytka: broke a lock on ${rel} held for ${Math.round(age / 1000)}s — the process that took it is gone or hung`),
+    })
+  }
+
+  /** The body of setTaskFields, with the lock already held. Never call it without one. */
+  function setTaskFieldsLocked (file, rel, id, fields, expect) {
+    // One read, and the line offsets come from exactly the bytes about to be spliced. This used
+    // to read the file twice — through loadTasks for the parse, then again for the text — and a
+    // write landing between the two put every `__line` on the wrong line.
+    const priorText = readFileSync(file, 'utf8')
+    const doc = parseYaml(priorText, rel)
+    const list = Array.isArray(doc.tasks) ? doc.tasks : []
     const task = list.find(t => String(t.id) === id)
     if (!task) { console.error(`nytka: no task ${id}`); throw new TaskUsageError() }
+    if (expect) requireUnchanged(id, task, expect, rel)
     const start = task.__line
-    const priorText = readFileSync(file, 'utf8')
     const lines = priorText.split('\n')
     const itemIndent = lines[start].match(/^ */)[0].length
     let end = lines.length
@@ -263,7 +311,7 @@ export function runTaskCommand (argv = [], { cwd = process.cwd(), today = isoDat
     for (let n = 0; n < Math.min(lines.length, 10); n++) {
       if (/^updated\s*:/.test(lines[n])) { lines[n] = `updated: "${TODAY}"`; break }
     }
-    writeFileSync(file, lines.join('\n'))
+    writeFileAtomic(file, lines.join('\n'))
     verifyWrite(file, id, fields, list, priorText)
     return task
   }
@@ -278,6 +326,12 @@ export function runTaskCommand (argv = [], { cwd = process.cwd(), today = isoDat
    * all. A believable wrong answer is the one failure this tool exists to prevent, and it does
    * not stop being one because the output mode is a terminal rather than JSON.
    *
+   * Since 2026-09-13 this runs under the registry lock, which is what makes the restore below
+   * sound. It was not before: the pre-image could be older than another process's committed
+   * write, so rolling back reverted work that had already been reported as done — 32 of 40
+   * concurrent pairs ended with the registry recording neither transition. The check was right
+   * and the recovery was the defect. See "writing the registry safely" above.
+   *
    * Restoring rather than only reporting: loadTasks parsed the pre-image strictly a moment ago,
    * so putting those bytes back is a return to a state known to be readable, not a guess. The
    * alternative hands the owner a hand-repair job for an edit they never made by hand.
@@ -285,7 +339,7 @@ export function runTaskCommand (argv = [], { cwd = process.cwd(), today = isoDat
   function verifyWrite (file, id, fields, priorList, priorText) {
     const rel = relative(ROOT, file)
     const abandon = why => {
-      writeFileSync(file, priorText)
+      writeFileAtomic(file, priorText)
       throw new Error(`the edit to ${id} did not land — ${rel} is unchanged.\n  ${why}`)
     }
 
@@ -704,7 +758,7 @@ export function runTaskCommand (argv = [], { cwd = process.cwd(), today = isoDat
       }
       if (sub === 'cancel') fields.reason = yamlString(cancelReason())
 
-      const t = setTaskFields(String(id), fields)
+      const t = setTaskFields(String(id), fields, { expect: before })
 
       // Closing a task can free others, and `cancelled` frees them exactly as `done` does: §8
       // makes both terminal, so a task waiting on a cancelled one is waiting on nothing.
