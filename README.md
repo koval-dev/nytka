@@ -31,13 +31,13 @@ npm; their source repo is private.** They are built separately so this repo stay
 nothing installed — you never need their source to use either lane.
 
 ```
-npx @nytka/cli lint .              # the released build of tools/nytka-lint.mjs, nothing to clone
+npx @nytka/cli check .             # the released build of tools/nytka-lint.mjs, nothing to clone
 npm search keywords:nytka-plugin   # which connectors exist
 npx @nytka/cli add gsc             # install one
 ```
 
 The two lanes are the same format. Nothing here requires the packages, and the packages do not
-replace anything here. Verified 2026-08-06 against the npm registry.
+replace anything here. Re-verified 2026-09-14 against the npm registry.
 
 ## The problem it solves
 
@@ -110,6 +110,13 @@ Three operations keep a package honest — [ingest](procedures/ingest.md),
 query, and [lint](procedures/lint.md). Ingest distils new material in;
 query loads the narrowest level that answers a question; lint checks what rotted.
 
+Two of the three are procedures an agent follows. Query is also a command: `nytka context <id>`
+assembles §10's bounded context for a task — the record, the decisions and procedures it names,
+the project identity, `current-state.md` — and prints the index of what it deliberately did not
+open. It follows links a task already declares. There is no index, no ranking and no
+embeddings, and a task that names nothing gets nothing; see [unresolved.md](unresolved.md) for
+why that line is where it is.
+
 Two more govern the resource none of them can replace — a person's attention.
 [work-a-task](procedures/work-a-task.md) is the daily loop from picking work up to handing it
 back, executable with nothing installed. [ask-the-owner](procedures/ask-the-owner.md) is when an
@@ -127,7 +134,7 @@ npx @nytka/cli info                # what this project has, and which credential
 ```
 
 **No list of connectors is committed in this repo.** One would be wrong the first time a
-package ships, and P3 says the live system is the truth. Six are published as of 2026-08-06 —
+package ships, and P3 says the live system is the truth. Six are published as of 2026-09-14 —
 run the search rather than trusting that number.
 
 [collect-data.md](procedures/collect-data.md) is the procedure: find a connector, install it,
@@ -139,22 +146,29 @@ date. Connectors write into `datasets/`, whose payloads an agent must never read
 ```
 node tools/nytka-lint.mjs /path/to/project     # committed here, nothing to install
 node tools/nytka.mjs status                    # and the backlog commands, on the same terms
-npx @nytka/cli lint /path/to/project           # the same source, from the registry
+npx @nytka/cli check /path/to/project          # the same source, from the registry
 ```
 
 Zero dependencies. Checks expiry dates, unverified external claims, decision-graph
 consistency, dangling links, missing `type`, staleness of `current-state.md`, and template
 placeholders nobody filled in.
 
-`tools/` is four generated read-only copies of source that lives in `@nytka/cli` — regenerated
+`tools/` is five generated read-only copies of source that lives in `@nytka/cli` — regenerated
 on release and drift-tested. Do not edit them here, and **copy the directory rather than one
 file out of it**: they import each other by relative path, which needs no `node_modules` but
 does need its siblings.
 
+The fifth arrived on 2026-09-13. `nytka-write.mjs` is the one writer the task commands go
+through: it takes a lock on the registry, replaces the file atomically, and refuses a transition
+that was decided against a record which changed underneath it. Before it, two agents running
+`task start` at once lost a transition in 39 of 40 runs, and 32 of those ended with the registry
+recording neither while a command printed success and exited 0. That is the tool corrupting a
+file the format defines, not a gap in the format — which is why it arrived as a regenerated file
+and changed nothing in `SPEC.md`.
+
 Between releases the committed copies can drift from the published package in either direction
-— same source, two release schedules. As of 2026-08-06 they agree: `node tools/nytka-lint.mjs`
-and `npx @nytka/cli check` report the same result on this directory. That is a dated
-observation; [current-state.md](current-state.md) carries it with its evidence.
+— same source, two release schedules. Re-checked 2026-09-14: `node tools/nytka-lint.mjs .` and
+`npx @nytka/cli check .` report the same result on this directory, down to the document count.
 
 The vendored `tools/nytka.mjs` is deliberately the smaller command set. `add`, `info` and
 `upgrade` install or inspect packages, so they belong to the lane where something is installed
@@ -166,19 +180,23 @@ failure in a real project is something it would have flagged.
 
 ## Status
 
-**v0.1, draft.** In use on one real project, and exercised from a second direction by a line of
-published connectors that write into a project's `datasets/`. The format will change; it is
-markdown frontmatter, so migration is a rename.
+**v0.1, draft.** In routine use across several projects as of 2026-09-14, and exercised from a
+second direction by a line of published connectors that write into a project's `datasets/`. The
+format will change; it is markdown frontmatter, so migration is a rename.
 
-A connector is tooling, not an adopting project, so the parts only a second adopter would
-stress are still untested — agent-reported numbers chief among them. `artifacts/` came off that
+Read that as one person's projects rather than as independent adopters, because that is what it
+is. Nothing here has been stressed by someone who did not write it, so the parts that depend on
+a stranger's reading are still open — whether the vocabulary gets filled in without prompting,
+and whether agent-reported numbers survive review, chief among them. `artifacts/` came off that
 list: it carries real assets in two repos, and SPEC §3 now says what it holds
 ([0010](decisions/0010-artifacts-holds-non-markdown-files.md)). See
 [unresolved.md](unresolved.md) for what is still open.
 
 **The spec is frozen at v0.1 as of 2026-07-31.** It changes when a real project breaks against
 it, not when this repo thinks of something. Five days of format work produced 33 commits and
-four times more prose about the spec than spec; what v0.1 needs now is use.
+four times more prose about the spec than spec; what v0.1 needs now is use. The freeze has held:
+`SPEC.md` last changed on 2026-08-06, when §3 gained `artifacts/` under 0010, and the five weeks
+since have gone to the tools instead.
 
 Nytka manages itself under its own rules — `project.yaml`, `decisions/` and `current-state.md`
 in this repo are the dogfood, and the first bug reports.
