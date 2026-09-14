@@ -1,5 +1,5 @@
 version: 1
-updated: "2026-08-06"
+updated: "2026-09-14"
 
 # Nytka's own backlog. Schema: SPEC.md §8.
 
@@ -901,3 +901,39 @@ tasks:
     created: 2026-08-06
     updated: 2026-08-06
     acceptedBy: "human:mike"
+
+  - id: DOC-003
+    title: "Say what kind of project nytka suits, somewhere a stranger will read it"
+    status: proposed
+    proposedBy: claude-opus-5
+    priority: medium
+    owner: ""
+    blockedBy: []
+    context: |
+      Proposed by an agent on 2026-09-14 while re-verifying the README. Not committed work
+      until a human accepts it — see decision 0006.
+
+      Nothing in this repo says what kinds of work the format suits. Checked on 2026-09-14:
+      not SPEC §1, which states the problem but never who has it; not §12, which says how to
+      start a project but not whether to; not QUICKSTART.md. `AGENTS.md` tells agents not to
+      auto-scan `adopters/`, a directory that does not exist.
+
+      The README gained a `Where it fits` section the same day, which closes the gap for the
+      one entry point that has it. It does not close it for the others, and the others matter
+      more: the supported path is "paste the SPEC.md link", so the file most readers arrive by
+      is the one that still answers the question nowhere. QUICKSTART.md has the same shape —
+      it opens with "if the project already uses nytka", assuming the decision is made.
+
+      The owner's prompt for this was asking whether nytka suits long-form writing. That
+      question has no answer in the repo, and the answer is not obvious from the spec: the
+      vocabulary reads as though it were built for software, because it was.
+
+      Scope is deliberately open. This may be one paragraph in SPEC §1, or a decision that
+      fit guidance belongs only in the README because the spec is normative and fit is not.
+      The second is a real possibility and would close this task without a spec change.
+    acceptanceCriteria:
+      - "a reader arriving only at SPEC.md can tell whether their project is one nytka suits,
+         or a decision records why that belongs outside the spec"
+      - "any project shape named as a fit is marked with whether it has actually been run"
+    created: 2026-09-14
+    updated: 2026-09-14

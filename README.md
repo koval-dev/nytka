@@ -27,13 +27,11 @@ procedures, the scripts in `tools/` — is meant to be read and copied. Your age
 
 **Or install the packages.** `@nytka/cli` gives you `nytka` as a command, and `@nytka/plugin-*`
 are connectors that collect real data into a project's `datasets/`. **The packages are public on
-npm; their source repo is private.** They are built separately so this repo stays readable with
-nothing installed — you never need their source to use either lane.
+npm; their source repo is private.** They are built separately, so you never need their source
+to use either lane.
 
 ```
-npx @nytka/cli check .             # the released build of tools/nytka-lint.mjs, nothing to clone
-npm search keywords:nytka-plugin   # which connectors exist
-npx @nytka/cli add gsc             # install one
+npx @nytka/cli check .      # the released build of tools/nytka-lint.mjs
 ```
 
 The two lanes are the same format. Nothing here requires the packages, and the packages do not
@@ -54,6 +52,27 @@ phone are indistinguishable.
 Nytka's premise: **you cannot stop knowledge going stale, so make staleness detectable.**
 Every claim records who made it, when, against what, and when to stop trusting it. A package
 that has rotted says so, instead of reading exactly as confidently as one that has not.
+
+## Where it fits
+
+Four conditions, and the payoff scales with how many hold. Work that spans enough sessions
+that you stop remembering it. Decisions you cannot recover by reading the output — the three
+approaches rejected leave no trace in the one that shipped. Claims about systems you do not
+control, which are true on the day you write them. And an agent producing enough of the
+material that a guess and a confirmed fact need telling apart.
+
+It has carried three shapes so far: content and CMS work signed off by someone non-technical,
+which is the case v0.1 came from; reporting-heavy work where the numbers come from outside
+systems and expire; and this repo, which is a nytka package and the source of most of its own
+bug reports.
+
+Long-form writing — a book, a course, a series — looks like a fit and **has not been tried**.
+The mapping is clean on paper: `decisions/` holds why the structure and the voice are what
+they are, which is the thing that goes missing between drafts; `research/` keeps source
+material with its provenance, so a figure quoted in chapter two still carries the date it was
+true; `stale_after` covers the statistic that expires mid-manuscript.
+
+Where it does not pay: a single session, or anything nobody will come back to.
 
 ## What that looks like
 
@@ -119,8 +138,8 @@ why that line is where it is.
 
 Two more govern the resource none of them can replace — a person's attention.
 [work-a-task](procedures/work-a-task.md) is the daily loop from picking work up to handing it
-back, executable with nothing installed. [ask-the-owner](procedures/ask-the-owner.md) is when an
-agent may interrupt a human, and the shape a question or a report has to take to be worth reading.
+back. [ask-the-owner](procedures/ask-the-owner.md) is when an agent may interrupt a human, and
+the shape a question or a report has to take to be worth reading.
 
 ## Connectors
 
@@ -170,24 +189,18 @@ Between releases the committed copies can drift from the published package in ei
 — same source, two release schedules. Re-checked 2026-09-14: `node tools/nytka-lint.mjs .` and
 `npx @nytka/cli check .` report the same result on this directory, down to the document count.
 
-The vendored `tools/nytka.mjs` is deliberately the smaller command set. `add`, `info` and
-`upgrade` install or inspect packages, so they belong to the lane where something is installed
-and ship only in `@nytka/cli` — they are not missing from `tools/`, they are out of scope for a
-directory that must run with nothing installed.
-
 Lint is the operation most projects skip and the one that pays. Nearly every knowledge
 failure in a real project is something it would have flagged.
 
 ## Status
 
-**v0.1, draft.** In routine use across several projects as of 2026-09-14, and exercised from a
-second direction by a line of published connectors that write into a project's `datasets/`. The
-format will change; it is markdown frontmatter, so migration is a rename.
+**v0.1, draft.** In active use as of 2026-09-14, and exercised from a second direction by a
+line of published connectors that write into a project's `datasets/`. The format will change;
+it is markdown frontmatter, so migration is a rename.
 
-Read that as one person's projects rather than as independent adopters, because that is what it
-is. Nothing here has been stressed by someone who did not write it, so the parts that depend on
-a stranger's reading are still open — whether the vocabulary gets filled in without prompting,
-and whether agent-reported numbers survive review, chief among them. `artifacts/` came off that
+Everything here was written and used by the same person, so the parts that depend on a
+stranger's reading are untested — whether the vocabulary gets filled in without prompting, and
+whether agent-reported numbers survive review, chief among them. `artifacts/` came off that
 list: it carries real assets in two repos, and SPEC §3 now says what it holds
 ([0010](decisions/0010-artifacts-holds-non-markdown-files.md)). See
 [unresolved.md](unresolved.md) for what is still open.
