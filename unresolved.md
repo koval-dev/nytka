@@ -204,3 +204,40 @@ weigh the breakage.
 
 **Decision trigger:** OKF v1.0, or the first nytka-shaped need for attested computations
 (likely a reporting client, not a content project).
+
+---
+
+## Where does a model call's usage — and a project's spending allowance — live?
+
+**Status:** open — found in `kd-nytka` on 2026-09-19, recorded here because it is the format's
+to answer
+
+The format describes collecting: `datasets/` with `collectedAt` and `validUntil`, provenance
+saying what was read and when. Money appears only as a reason to ask the owner
+(`procedures/ask-the-owner.md`, `procedures/collect-data.md`) and as a word in `private/`'s
+README. No committed file records what a call cost, and no field holds a ceiling.
+
+That was fine while the only metered connector reported a number a human read off the
+terminal. It stops being fine at two points that have now arrived together: a connector whose
+spend is proportional to a payload the agent is not allowed to read (`@nytka/plugin-typesafe`
+judges a whole dataset in one command), and a runner that will make such calls unattended
+(`kd-nytka` decision 0012, tasks RUN-001 and RUN-002). An unattended run that spends money
+with no committed record of it is the *reporting* half of the OKF question above — attested
+computations — arriving from the cost side rather than the result side.
+
+Two things want a home, and they are not the same thing. **Usage** is evidence: what a call
+consumed, as the API reported it, and what that cost at a rate that was true on a date.
+**An allowance** is a constraint the owner sets: how much a project, or one run, may spend
+before a human is asked. The first is provenance and belongs beside the thing it paid for;
+the second is an owner answer and belongs where owner answers already go.
+
+**Working rule:** usage and the estimated cost, with the rate and the date it was read, go in
+the payload's `apiMetadata` and on stdout — never silently zero, and never in the registry
+entry until PLG-001 decides the entry's shape. A run's total goes in its run record under
+`artifacts/`, as an output. The owner's ceiling lives in `private/`, which already names
+budgets, and in the runner's own configuration; it does not go on a task record (decision
+0007) and it does not enter `SPEC.md`.
+
+**Decision trigger:** the first workflow that spends money unattended, or the first month in
+which a project's spend cannot be reconstructed from its committed files. Either is the
+evidence for a field, and until then a paragraph is the honest form.

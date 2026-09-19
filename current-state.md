@@ -79,6 +79,13 @@ with the fourth relocated, not descoped). [0006](decisions/0006-task-lifecycle.m
 Newest first, and short by rule. Full write-ups, including the 18 older entries pruned from
 here on 2026-07-31, are in [history/timeline.md](history/timeline.md).
 
+- **2026-09-19** — **`unresolved.md` gained its tenth question: where a model call's usage and a
+  project's spending allowance live.** Found in `kd-nytka`, where the seventh connector
+  (`@nytka/plugin-typesafe`) judges a dataset rather than collecting one and its decision 0012
+  names a runner that will make such calls unattended. Nothing in `SPEC.md` changed: usage has
+  a home in the payload and a run's total in `artifacts/`; a ceiling has none, and a paragraph
+  is the honest form until the first unattended run spends money.
+
 - **2026-07-31** — **`artifacts/` is defined in SPEC §3**
   ([0010](decisions/0010-artifacts-holds-non-markdown-files.md)). Non-markdown files the project
   owns, input or output; `artifacts/index.json` carries provenance; a file with no entry is legal
