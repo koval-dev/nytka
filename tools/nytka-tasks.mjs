@@ -171,9 +171,21 @@ export function runTaskCommand (argv = [], { cwd = process.cwd(), today = isoDat
    */
   function taskSource () {
     const p = loadProject()
+    const tracker = String(p?.tasks?.tracker ?? 'file')
+    if (tracker === 'file') {
+      return {
+        tracker,
+        file: join(ROOT, String(p?.tasks?.registry ?? 'tasks/tasks.yaml')),
+        writable: true,
+      }
+    }
+    // On an external tracker the backlog this repo can see is the generated snapshot, and it is
+    // readable but never writable. ../nytka 0009 renamed it from snapshot.md — markdown these
+    // commands could not parse — to snapshot.yaml, which is why reading it is now possible at all.
     return {
-      tracker: String(p?.tasks?.tracker ?? 'file'),
-      file: join(ROOT, String(p?.tasks?.registry ?? 'tasks/tasks.yaml')),
+      tracker,
+      file: join(ROOT, String(p?.tasks?.snapshot ?? 'tasks/snapshot.yaml')),
+      writable: false,
     }
   }
 
@@ -195,39 +207,64 @@ export function runTaskCommand (argv = [], { cwd = process.cwd(), today = isoDat
    * believable and exit 0 is this file's recurring failure (../nytka TOOL-005), and it is why
    * this refuses rather than printing an empty pane: an empty pane is the same lie, shorter.
    *
-   * Refusing is the whole fix, deliberately. Reading a snapshot is not implemented and is not
-   * this guard's to add — nytka ships no tracker integration (../nytka decisions/0004) and the
-   * snapshot §4 names is `tasks/snapshot.md`, markdown these commands cannot parse. RT-003 is
-   * where a reader would come from, and it has to decide the direction of authority first.
+   * The two halves are no longer the same answer, which is what changed on 2026-09-26.
    *
-   * Every value that is not `file` refuses, including one §4 does not list. A typo leaves
+   * READING a snapshot is now implemented: 0011 settled the direction of authority (the issue owns
+   * the task) and ../nytka 0009 made the snapshot `snapshot.yaml` instead of markdown these
+   * commands could not parse. Both reasons this guard gave for refusing reads are gone, so reads
+   * go to the snapshot and say where they came from.
+   *
+   * WRITING still refuses, and always will. A write here would be a second writable copy of a
+   * status the tracker owns, which is P2's named failure. The refusal names the tracker rather
+   * than a file, because that is where the change belongs.
+   *
+   * Every value that is not `file` is external, including one §4 does not list. A typo leaves
    * nothing able to say which file is authoritative, and the message names the value it read —
-   * so a misspelled tracker is visible in the refusal rather than hidden by a fallback.
+   * so a misspelled tracker is visible rather than hidden by a fallback.
    */
-  function requireFileTracker () {
-    const { tracker, file } = taskSource()
-    if (tracker === 'file') return
+  function requireReadableTasks () {
+    const { tracker, file, writable } = taskSource()
+    if (writable) return
+    const rel = relative(ROOT, file)
+    if (existsSync(file)) return
+    for (const line of [
+      '',
+      `nytka: this project declares  tasks.tracker: ${tracker}`,
+      '',
+      `       The tracker owns status and this repo holds a generated read-only snapshot, but`,
+      `       ${rel} does not exist yet, so there is no backlog to read offline.`,
+      '',
+      '       Generate it with the tracker\'s connector — for GitHub:',
+      '         npx nytka-github sync',
+      '',
+      '       Reporting an empty backlog instead would be the same lie, shorter (../nytka TOOL-005).',
+      '',
+    ]) console.error(line)
+    throw new TrackerUnsupportedError(tracker)
+  }
+
+  function requireWritableTasks () {
+    const { tracker, file, writable } = taskSource()
+    if (writable) return
     const rel = relative(ROOT, file)
     for (const line of [
       '',
       `nytka: this project declares  tasks.tracker: ${tracker}`,
       '',
-      '       The task commands read a registry file. On an external tracker that file is not',
-      '       authoritative: the tracker owns status and the repo holds a generated read-only',
-      `       snapshot (SPEC §8). Reading ${rel} here would report a copy as the backlog,`,
-      '       and writing to it would make a second writable copy of a status the tracker owns.',
+      `       ${rel} is a generated read-only snapshot. Writing a status into it would make a`,
+      '       second writable copy of a fact the tracker owns — P2\'s named failure, and the whole',
+      '       reason this project moved its status out of a file.',
       '',
-      `       nytka ships no reader for ${tracker}. Until it does:`,
-      '         · read the backlog in the tracker itself',
-      `         · or set  tasks.tracker: file  in project.yaml, if ${rel} really is where`,
-      '           status is written',
+      '       Make the change in the tracker, then refresh the snapshot:',
+      '         · set the task\'s state there (for GitHub: the `Lifecycle` issue field)',
+      '         · npx nytka-github sync',
       '',
     ]) console.error(line)
     throw new TrackerUnsupportedError(tracker)
   }
 
   function loadTasks () {
-    requireFileTracker()
+    requireReadableTasks()
     const file = tasksPath()
     if (!existsSync(file)) return { file, doc: { tasks: [] }, list: [] }
     const doc = parseYaml(readFileSync(file, 'utf8'), relative(ROOT, file))
@@ -241,7 +278,7 @@ export function runTaskCommand (argv = [], { cwd = process.cwd(), today = isoDat
   // The whole cycle runs under one lock. See "writing the registry safely" above for the two
   // failures that requires, and for what was measured.
   function setTaskFields (id, fields, { expect } = {}) {
-    requireFileTracker()
+    requireWritableTasks()
     const file = tasksPath()
     const rel = relative(ROOT, file)
     // Matches what loadTasks did with a missing registry — an empty list, so no task by that id.
@@ -655,11 +692,18 @@ export function runTaskCommand (argv = [], { cwd = process.cwd(), today = isoDat
     console.log(`\n  ${t.id}  ${t.title}`)
     console.log(`  priority ${t.priority ?? 'unset'} · owner ${t.owner ?? 'unassigned'}\n`)
     console.log(`  nytka context ${t.id}     assemble what an agent needs`)
-    console.log(`  nytka task start ${t.id}  mark it in progress\n`)
+    // The second hint depends on who owns status. Offering `task start` on an external tracker
+    // sends the reader straight into a refusal, which is a worse first experience than no hint.
+    if (taskSource().writable) console.log(`  nytka task start ${t.id}  mark it in progress\n`)
+    else console.log(`  set it in the tracker, then  nytka-github sync\n`)
   }
 
   function cmdTask (args) {
     const [sub, id, arg, ...rest] = args
+    // A write verb is refused before anything is read. On an external tracker the read guard would
+    // otherwise answer first and answer the wrong question — "there is no snapshot to read" when
+    // what the caller needs to hear is "change it in the tracker, this file is a copy".
+    if (sub && sub in TRANSITIONS) requireWritableTasks()
     const { list } = loadTasks()
     const byId = new Map(list.map(t => [String(t.id), t]))
 

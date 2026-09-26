@@ -2,10 +2,11 @@
 type: Decision
 title: A tracker snapshot is committed YAML, and the line may ship one generator
 description: What §4's snapshot field names, and the one consequence of 0004 that no longer holds
-status: draft
+status: stable
 generated: { by: claude-opus-5, at: 2026-07-31 }
 verified:
   - { by: claude-opus-5, at: 2026-07-31, against: nytka-cli-task-commands-and-lint }
+  - { by: "human:mike", at: 2026-09-25, against: owner-confirmation }
 confidence: stated
 stale_after: 2027-01-31
 supersedes: null
@@ -104,7 +105,10 @@ in `unresolved.md` rather than worked around here.
 
 ## Status
 
-Draft. The committed-snapshot choice is the owner's, stated 2026-07-31 against an option that
+**Confirmed by the owner 2026-09-25**, together with the development repo's
+`decisions/0011-a-tracker-is-a-connector.md`, which carries the design this serves.
+
+The committed-snapshot choice is the owner's, stated 2026-07-31 against an option that
 named what gitignoring costs. The `.yaml` correction, the reading of 0004, and the refusal to mark
 0004 superseded follow from evidence rather than from anything the owner said, and are this
 record's to defend.
