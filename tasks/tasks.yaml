@@ -1074,5 +1074,39 @@ tasks:
           templates must resolve before the website commit is published. Publication and
           deployment results will be appended after verification. This proposal retains
           proposedBy: codex and status: proposed, with no acceptedBy.
+      - at: 2026-11-06
+        note: |
+          Published the documentation to main without force-pushing in commit
+          1f45d54009a89fc3c9d6152a888ba3f5bdb250ec. The public procedure and both templates
+          returned HTTP 200 at their GitHub main URLs; their raw public contents match the
+          committed files byte for byte. README's Operations section links to the procedure.
+          The hypothetical walkthroughs above remain intact and are not application tests.
+
+          After those public checks passed, published the separate website commit
+          b0ee3d543980ce63c056d77dade59a3f0a781e59. Only src/lib/site.ts and
+          src/pages/index.astro changed: one centralized destination and one paragraph
+          immediately after the Framework context-flow diagram. The existing homepage
+          source outside that addition/import is unchanged, including prompts, navigation
+          and version displays. Existing routes and the Netlify configuration are retained.
+
+          npm run build passed with the live npm catalogue. Local and live Chromium
+          156.0.8078.4 checks passed for 73 internal page/fragment links across the home,
+          tools and 404 pages. The home and tools pages have no horizontal overflow at
+          1366x768, 390x844 and 320x568. At each width, sequential Tab navigation reaches
+          the new public destination with a visible 2px focus outline; screenshots were
+          inspected. The live homepage and both public template pages returned HTTP 200.
+          The new link uses the site's underline, external-link label and new-tab conventions.
+
+          Netlify's API reported production deploy 6aee2064c400dbfbde593f5f ready and
+          published at 2026-11-06T18:46:11.408Z for https://nytka.dev, with commit_ref
+          b0ee3d543980ce63c056d77dade59a3f0a781e59, exactly the website commit. Live
+          verification followed that deployment. No npm release, version tag, code trial
+          or acceptance transition was made. The source DOCX remains unchanged by SHA-256.
+
+          Publication evidence completes the authorized release work, not human review
+          of this proposal. It remains proposed with proposedBy: codex and no acceptedBy.
+          The most likely remaining limitation is still an omitted project-specific input
+          or setting when a real project first reproduces a candidate; no trial has yet
+          tested supervision, rework, cost or broader adoption.
     created: 2026-11-06
     updated: 2026-11-06

@@ -27,15 +27,20 @@ registry for task status.
 ## Optional companion — 2026-11-06
 
 An experimental [delegated development procedure](procedures/delegated-development.md) and
-two opt-in templates are drafted for software projects. The procedure separates implementation
-from fresh verification, maps regressions and identifies the tested candidate without requiring
-commits. The existing task loop links to it; the format, generated tools and default scaffold
-are unchanged.
+two opt-in templates are published as drafts for software projects. The procedure separates
+implementation from fresh verification, maps regressions and identifies the tested candidate
+without requiring commits. The existing task loop links to it; the format, generated tools
+and default scaffold are unchanged.
 
 Document checks and review evidence are recorded in the registry's companion proposal,
 **DOC-004**, which remains `proposed` pending human acceptance. A code trial has not run: it
 needs a separate request naming a project and accepted task. Whether the preparation reduces
 supervision or rework at an acceptable cost is still untested.
+
+Published on 2026-11-06, with a short experimental link after the Framework diagram on
+[nytka.dev](https://nytka.dev/#framework). The public procedure and both templates resolve;
+the live website passed link, keyboard-focus and layout checks at desktop, 390px and 320px.
+Publication revisions and Netlify deployment evidence are appended to the proposal's work log.
 
 ## Current focus
 
