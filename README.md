@@ -141,6 +141,10 @@ Two more govern the resource none of them can replace — a person's attention.
 back. [ask-the-owner](procedures/ask-the-owner.md) is when an agent may interrupt a human, and
 the shape a question or a report has to take to be worth reading.
 
+Experimental: [delegated development](procedures/delegated-development.md) is an optional
+workflow for software projects, with bounded implementation packets and fresh verification.
+Its effect on supervision and rework remains untested.
+
 ## Connectors
 
 Real data comes from connectors, not from an agent's recollection. Three commands, and the

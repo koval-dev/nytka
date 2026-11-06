@@ -1,5 +1,5 @@
 version: 1
-updated: "2026-09-14"
+updated: "2026-11-06"
 
 # Nytka's own backlog. Schema: SPEC.md §8.
 
@@ -937,3 +937,142 @@ tasks:
       - "any project shape named as a fit is marked with whether it has actually been run"
     created: 2026-09-14
     updated: 2026-09-14
+
+  - id: DOC-004
+    title: "Review the optional delegated development companion"
+    status: proposed
+    proposedBy: codex
+    priority: medium
+    owner: ""
+    blockedBy: []
+    context: |
+      The owner requested implementation of a document-authoring plan on 2026-11-06: an
+      experimental delegated development procedure and two opt-in templates. Authoring is
+      authorized by that request; this newly added registry proposal records the review
+      without asserting human acceptance of the result or adopting the workflow by default.
+
+      The companion tests fresh verification, regression mapping, reproducible candidates,
+      bounded corrections and proportionate owner-attention accounting. Requirements and
+      status stay in the existing tracker. No format, task-field or conformance change is
+      intended; decision 0007 and the v0.1 freeze still apply.
+
+      A code trial needs a separate request naming a project and an accepted task. This
+      proposal covers the reusable documents, not execution in another project. Whether
+      coordination saves enough supervision or rework to justify its cost remains untested.
+    acceptanceCriteria:
+      - "procedures/delegated-development.md and the two delegation templates form an optional,
+         experimental companion; SPEC.md, generated tools and the default scaffold are unchanged"
+      - "cosmetic work, a behavioural bug fix and deletion or access-control work select
+         proportionate checking levels in a documented walkthrough"
+      - "walkthroughs preserve proposed-task acceptance, unresolved dependencies, existing
+         local edits, forbidden commits, a non-default base branch and an unavailable verifier"
+      - "packet and return fields cover authoritative criteria, regression checks, candidate
+         identity, environments, role boundaries, bounded corrections and honest gaps;
+         failed or unchecked required criteria cannot become a passing handoff"
+      - "the coordinator prepares briefs from existing records; accounting permits unknown
+         values; public examples need no private project details or inaccessible evidence"
+      - "a bounded, separately authorized code trial and seeded-fault check are described,
+         without claiming that a trial or independent document review has occurred"
+      - "node tools/nytka-lint.mjs . passes with zero errors and the registry reflects the work"
+    workLog:
+      - at: 2026-11-06
+        note: |
+          Read SPEC.md, current-state.md, decision 0007, unresolved.md, the task and
+          owner-question procedures, the registry and the owner's source material. The
+          starting working tree is clean. No existing task covers this companion, and no
+          existing task's acceptance criteria are satisfied by authoring it.
+
+          Baseline lint: 0 errors, 1 warning across 27 documents. The warning is the age of
+          current-state.md, whose newest date is 2026-09-19. Authoring and scenario checks
+          come next; no product trial is authorized by the current request.
+      - at: 2026-11-06
+        note: |
+          Drafted procedures/delegated-development.md, templates/delegation-packet.md and
+          templates/delegation-return.md. Added the opt-in pointer in work-a-task.md and a
+          dated, narrowly scoped current-state entry. The source input is unchanged.
+
+          Document criteria checked by the author, not by an independent verifier. These
+          walkthroughs are hypothetical reasoning checks, not executed application tests:
+
+            1. Optional and portable — met by inspecting the three documents and the diff.
+               No installation or task-schema addition. SPEC.md, decisions/, unresolved.md,
+               generated tools, project instructions and templates/project/ are unchanged.
+
+            2. Proportionate checking — met by walking three cases through the level table.
+               A tooltip punctuation fix uses lightweight and the existing task record; no
+               packet or verifier is added. An empty-input behavioural bug uses standard:
+               reference the accepted criterion/revision, check empty input independently
+               and map previously valid input behaviour to regression checks. A cleanup
+               change uses elevated: test referenced data survives, true orphans are removed
+               and interruption/retry does not damage retained data in required environments.
+
+            3. Project authority — met by following the readiness and adoption branches.
+               A proposed task cannot dispatch implementation; an unresolved dependency
+               remains a blocker. Existing tracked edits and untracked files enter the
+               baseline and are explicitly included or excluded, never reset. The hypothetical
+               project reads release/next and checks from its own records, forbids commits
+               and branches, and hands back a hashed snapshot. Missing a fresh agent/session
+               records not checked; self-review cannot replace required fresh verification.
+
+            4. Complete handoffs — met by inspecting each packet/return section and tracing
+               fail and not-checked results for a required criterion: either makes the
+               aggregate incomplete. Partial packets leave parent criteria open. Fixtures,
+               runtime/service configuration, hashes, retained inputs and full diffs identify
+               the tested candidate. A relevant fixture/configuration/criteria change requires
+               a new identity, updated brief and renewed fresh checks. A failure reported
+               twice returns to the coordinator; the maximum is the initial attempt plus
+               two corrections, or a stricter project limit. Verifiers report without fixing.
+
+            5. Owner effort and public portability — met by reading the coordinator inputs
+               and optional accounting fields. They permit unknown measurements and resolve
+               routine authorized choices from records. All local Markdown targets resolve;
+               the new documents contain no source-project markers, workstation paths,
+               emails or external URLs. The worked example is explicitly hypothetical and
+               needs no private evidence to understand the procedure. This is a text review,
+               not evidence that owner time has been reduced.
+
+            6. Bounded later trial — met in the trial section: select a named project and
+               accepted task only under a separate execution request, verify/reproduce the
+               clean candidate, then check one undisclosed known fault in another disposable
+               copy with separate evidence and a final source comparison. No code trial,
+               seeded-fault check or independent document review has been performed here.
+
+            7. Lint and registry — met: node tools/nytka-lint.mjs . reports 0 errors,
+               0 warnings, 0 info across 28 documents (2026-11-06); git diff --check and
+               whitespace checks covering untracked documents pass. The task command reads
+               this proposal as proposed and non-actionable, with proposedBy: codex and no
+               acceptedBy. All 14 earlier task records are byte-for-byte unchanged; none
+               was completed or invalidated by this document work. The previous state-age
+               warning clears after the scoped state update, which explicitly leaves older
+               snapshots unrefreshed.
+
+          The walkthrough review corrected three details before handoff: repeated failures
+          stop even when nonconsecutive; changed candidates require renewed fresh verification;
+          and the no-commit example explicitly permits authoritative-task updates.
+
+          Most likely remaining error: reproducing a real candidate may expose an omitted
+          project-specific generated input or service setting. No executor or project has yet
+          exercised this companion end to end. Savings, usage/cost, delivery-time comparisons
+          and owner minutes remain unknown. The next action is human review of the documents;
+          a project trial is a separate authorization, not a condition for authoring them.
+      - at: 2026-11-06
+        note: |
+          The owner authorized publishing the existing companion and a small experimental
+          link on nytka.dev. Reviewed the six-file draft and retained its hypothetical
+          walkthroughs. Added a short Operations link in README.md and an explicit statement
+          that supervision and rework effects remain untested. Publication does not accept
+          this proposal, close it or authorize a code trial.
+
+          Pre-publication checks: node tools/nytka-lint.mjs . reports 0 errors, 0 warnings,
+          0 info across 28 documents; git diff --check and whitespace checks across all
+          seven changed/new files pass. All 47 local Markdown links in the changed documents
+          resolve, including fragments. All earlier task records are unchanged. The source
+          DOCX's SHA-256 is unchanged. SPEC.md, generated tools and templates/project/ are
+          unchanged; no package release, version bump or tag is part of this publication.
+
+          Publication will use main without force-pushing; the public procedure and both
+          templates must resolve before the website commit is published. Publication and
+          deployment results will be appended after verification. This proposal retains
+          proposedBy: codex and status: proposed, with no acceptedBy.
+    created: 2026-11-06
+    updated: 2026-11-06

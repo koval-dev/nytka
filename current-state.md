@@ -20,7 +20,22 @@ confidence: inferred
 
 # Current state
 
-**Last updated:** 2026-08-06
+**Last updated:** 2026-11-06 — companion entry only. Earlier entries and external snapshots
+below retain their original dates and have not been reverified by this update; read the
+registry for task status.
+
+## Optional companion — 2026-11-06
+
+An experimental [delegated development procedure](procedures/delegated-development.md) and
+two opt-in templates are drafted for software projects. The procedure separates implementation
+from fresh verification, maps regressions and identifies the tested candidate without requiring
+commits. The existing task loop links to it; the format, generated tools and default scaffold
+are unchanged.
+
+Document checks and review evidence are recorded in the registry's companion proposal,
+**DOC-004**, which remains `proposed` pending human acceptance. A code trial has not run: it
+needs a separate request naming a project and accepted task. Whether the preparation reduces
+supervision or rework at an acceptable cost is still untested.
 
 ## Current focus
 

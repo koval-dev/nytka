@@ -18,6 +18,10 @@ Every step below is a file you read or a line you edit. `nytka-lint` is the only
 Where a command makes a step faster it is shown as an accelerator; the step is defined by what it
 does to the files, never by the command.
 
+**Optional for software work:** if the project opts into bounded delegation and fresh
+verification, use [delegated-development](delegated-development.md) alongside this loop.
+Its experimental packet and return templates are outside the default scaffold.
+
 ---
 
 ## Steps
